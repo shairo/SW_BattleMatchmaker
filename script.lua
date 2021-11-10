@@ -1,8 +1,9 @@
+-- Battle Matchmaker
+-- Version 1.3.2
 
 g_players={}
 g_ui_id=0
 g_status_text=nil
-g_update_timer=0
 g_vehicles={}
 g_players={}
 g_bombs={}
@@ -43,8 +44,10 @@ button_names={
 }
 
 g_default_savedata={
-	hp=1000,
+	base_hp=property.slider("Default Vehicle HP", 0, 5000, 100, 2000),
 	battery_name='killed',
+	supply_ammo_amount=property.slider("Default Ammo Supply", 0, 100, 1, 40),
+	order_command=true,
 }
 
 function onCreate(is_world_create)
@@ -62,11 +65,6 @@ function onDestroy()
 end
 
 function onTick()
-	g_update_timer=(g_update_timer+1)%1200
-	if g_update_timer==0 then
-		showStatus()
-	end
-
 	for i=1,#g_vehicles do
 		updateVehicle(g_vehicles[i])
 	end
@@ -77,6 +75,10 @@ function onTick()
 	end
 
 	updateBomb()
+end
+
+function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
+	showStatus(true)
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
@@ -96,7 +98,7 @@ end
 
 function onButtonPress(vehicle_id, peer_id, button_name)
 	if not peer_id or peer_id<0 then return end
-	if not g_savedata.ammosupply then return end
+	if g_savedata.supply_ammo_amount<=0 then return end
 
 	local equipment_data=button_names[button_name]
 	if not equipment_data then return end
@@ -112,8 +114,21 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		return
 	end
 
+	server.announce('[Matchmaker]', tostring(vehicle_id), peer_id)
+	local vehicle=findVehicle(vehicle_id)
+	if vehicle and vehicle.remain_ammo<=0 then
+		server.announce('[Matchmaker]', 'out of ammo.', peer_id)
+		return
+	end
+
 	server.setCharacterItem(character_id, 1, equipment_id, true, equipment_amount)
-	server.announce('[Matchmaker]', 'Ammo here!', peer_id)
+
+	if vehicle then
+		vehicle.remain_ammo=vehicle.remain_ammo-1
+		server.announce('[Matchmaker]', 'Ammo here! (Remain:'..tostring(vehicle.remain_ammo)..')', peer_id)
+	else
+		server.announce('[Matchmaker]', 'Ammo here!', peer_id)
+	end
 end
 
 function onPlayerSit(peer_id, vehicle_id, seat_name)
@@ -128,17 +143,7 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
-	local vehicle,index=findVehicle(vehicle_id)
-	if not vehicle then return end
-	table.remove(g_vehicles,index)
-
-	for _,player in pairs(g_players) do
-		if player.vehicle_id==vehicle_id then
-			player.vehicle_id=-1
-		end
-	end
-
-	g_status_dirty=true
+	unregisterVehicle(vehicle_id)
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z)
@@ -169,6 +174,22 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 		peer_id=parsePeerId(two, peer_id, is_admin)
 		if not peer_id then return end
 		kill(peer_id)
+	elseif one=='order' then
+		local player=g_players[peer_id]
+		if not g_savedata.order_command then
+			server.announce('[Matchmaker]', 'order command is not available.', peer_id)
+			return
+		end
+		if player.vehicle_id <= 0 then
+			server.announce('[Matchmaker]', 'vehicle not found.', peer_id)
+			return
+		end
+		local m=server.getPlayerPos(peer_id)
+		local x, y, z=server.getPlayerLookDirection(peer_id)
+		local m2=matrix.translation(x*8,0,z*8)
+		server.setVehiclePos(player.vehicle_id, matrix.multiply(m2, m))
+		local name=server.getPlayerName(peer_id)
+		server.announce('[Matchmaker]', 'vehicle orderd by '..name..'.', -1)
 	elseif one=='reset' then
 		if not is_admin then
 			server.announce('[Matchmaker]', 'permission denied.', peer_id)
@@ -192,6 +213,7 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 			return
 		end
 		g_savedata.base_hp=hp
+		reregisterVehicles()
 		server.announce('[Matchmaker]', 'set base vehicle hp to '..tostring(g_savedata.base_hp), -1)
 	elseif one=='setbattery' then
 		if not is_admin then
@@ -203,20 +225,38 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 			return
 		end
 		g_savedata.battery_name=two
+		reregisterVehicles()
 		server.announce('[Matchmaker]', 'set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
-	elseif one=='ammosupply' then
+	elseif one=='setammo' then
+		if not is_admin then
+			server.announce('[Matchmaker]', 'permission denied.', peer_id)
+			return
+		end
+		if not two then
+			server.announce('[Matchmaker]', 'except supply_ammo_amount.', peer_id)
+			return
+		end
+		local supply_ammo_amount=tonumber(two)
+		if not supply_ammo_amount then
+			server.announce('[Matchmaker]', 'except number to supply_ammo_amount.', peer_id)
+			return
+		end
+		g_savedata.supply_ammo_amount=supply_ammo_amount
+		reregisterVehicles()
+		server.announce('[Matchmaker]', 'set supply ammo count to '..tostring(g_savedata.supply_ammo_amount), -1)
+	elseif one=='setorder' then
 		if not is_admin then
 			server.announce('[Matchmaker]', 'permission denied.', peer_id)
 			return
 		end
 		if two=='true' then
-			g_savedata.ammosupply=true
-			server.announce('[Matchmaker]', 'ammo supply enabled.', -1)
+			server.announce('[Matchmaker]', 'order command enabled.', -1)
+			g_savedata.order_command=true
 		elseif two=='false' then
-			g_savedata.ammosupply=false
-			server.announce('[Matchmaker]', 'ammo supply disabled.', -1)
+			server.announce('[Matchmaker]', 'order command disabled.', -1)
+			g_savedata.order_command=false
 		else
-			server.announce('[Matchmaker]', 'except "true" or "false".', peer_id)
+			server.announce('[Matchmaker]', 'except true or false.', peer_id)
 		end
 	else
 		if is_admin then
@@ -225,19 +265,29 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 				'  - ?mm join [team_name] (peer_id)\n'..
 				'  - ?mm leave (peer_id)\n'..
 				'  - ?mm die (peer_id)\n'..
+				'  - ?mm order\n'..
 				'  - ?mm reset\n'..
 				'  - ?mm sethp [hp]\n'..
 				'  - ?mm setbattery [battery_name]\n'..
-				'  - ?mm ammosupply [true|false]',
+				'  - ?mm setammo [supply_ammo_amount]\n'..
+				'  - ?mm setorder [true|false]',
 				peer_id)
 		else
 			server.announce('[Matchmaker]',
 				'Commands:\n'..
 				'  - ?mm join [team_name]\n'..
 				'  - ?mm leave\n'..
-				'  - ?mm die',
+				'  - ?mm die\n'..
+				'  - ?mm order',
 				peer_id)
 		end
+		server.announce('[Matchmaker]',
+			'Current settings:\n'..
+			'  - basehp:'..tostring(g_savedata.base_hp)..'\n'..
+			'  - battery name:'..g_savedata.battery_name..'\n'..
+			'  - ammo amount:'..tostring(g_savedata.supply_ammo_amount)..'\n'..
+			'  - order command enabled:'..tostring(g_savedata.order_command),
+			peer_id)
 	end
 end
 
@@ -333,7 +383,7 @@ function updateStatus()
 			if not first then g_status_text=g_status_text..'\n\n' end
 			g_status_text=g_status_text..'* Team '..team..' *'..stat
 			first=false
-		end	
+		end
 		showStatus()
 	else
 		g_status_text=nil
@@ -348,7 +398,12 @@ function playerToString(name, alive, hp, b)
 	return name..'\nStat:'..stat_text..hp_text..battery_text
 end
 
-function showStatus()
+function showStatus(regenerate)
+	if regenerate then
+		server.removePopup(-1, g_ui_id)
+		server.removeMapID(-1, g_ui_id)
+		g_ui_id=server.getMapID()
+	end
 	if g_status_text then
 		server.setPopupScreen(-1,g_ui_id,'',true,g_status_text,-0.9,0.2)
 	end
@@ -374,11 +429,12 @@ function registerVehicle(vehicle_id)
 	vehicle={
 		vehicle_id=vehicle_id,
 		alive=true,
+		remain_ammo=g_savedata.supply_ammo_amount//1|0,
 	}
 
 	local base_hp=g_savedata.base_hp
 	if base_hp and base_hp>0 then
-		vehicle.hp=math.max(base_hp,1)
+		vehicle.hp=math.max(base_hp//1|0,1)
 	end
 
 	local battery_name=g_savedata.battery_name
@@ -395,6 +451,46 @@ function registerVehicle(vehicle_id)
 	end
 end
 
+function unregisterVehicle(vehicle_id)
+	local vehicle,index=findVehicle(vehicle_id)
+	if not vehicle then return end
+	table.remove(g_vehicles,index)
+
+	for _,player in pairs(g_players) do
+		if player.vehicle_id==vehicle_id then
+			player.vehicle_id=-1
+		end
+	end
+
+	g_status_dirty=true
+end
+
+function reregisterVehicles()
+	for i=1,#g_vehicles do
+		local vehicle=g_vehicles[i]
+		if vehicle.alive then
+			vehicle.hp=nil
+			local base_hp=g_savedata.base_hp
+			if base_hp and base_hp>0 then
+				vehicle.hp=math.max(base_hp//1|0,1)
+			end
+
+			vehicle.battery_name=nil
+			local battery_name=g_savedata.battery_name
+			if battery_name then
+				local battery, is_success = server.getVehicleBattery(vehicle.vehicle_id, battery_name)
+				if is_success and battery.charge>0 then
+					vehicle.battery_name=battery_name
+				end
+			end
+
+			vehicle.remain_ammo=g_savedata.supply_ammo_amount//1|0
+
+			g_status_dirty=true
+		end
+	end
+end
+
 function updateVehicle(vehicle)
 	if not vehicle.alive then return end
 
@@ -402,7 +498,7 @@ function updateVehicle(vehicle)
 
 	if vehicle.battery_name then
 		local battery, is_success = server.getVehicleBattery(vehicle_id, vehicle.battery_name)
-		if not is_success or battery.charge<=0 then
+		if is_success and battery.charge<=0 then
 			vehicle.alive=false
 		end
 	end
@@ -445,7 +541,7 @@ function spawnBomb(vehicle_id)
 		table.insert(g_bombs,{
 			vehicle_id=vehicle_id,
 			object_id=object_id,
-			time=58,
+			time=100,
 		})
 	end
 end
