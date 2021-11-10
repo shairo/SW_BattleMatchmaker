@@ -79,6 +79,7 @@ end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	showStatus(true)
+	server.announce("[test]","test",-1)
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
