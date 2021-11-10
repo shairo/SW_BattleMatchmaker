@@ -205,6 +205,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 		g_savedata.battery_name=two
 		server.announce('[Matchmaker]', 'set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
 	elseif one=='ammosupply' then
+		if not is_admin then
+			server.announce('[Matchmaker]', 'permission denied.', peer_id)
+			return
+		end
 		if two=='true' then
 			g_savedata.ammosupply=true
 			server.announce('[Matchmaker]', 'ammo supply enabled.', -1)
@@ -318,7 +322,7 @@ function updateStatus()
 			end
 		end
 
-		teamStats[player.team]=stat..playerToString(player.name,player.alive,hp,battery_name)
+		teamStats[player.team]=stat..'\n'..playerToString(player.name,player.alive,hp,battery_name)
 		any=true
 	end
 
@@ -327,7 +331,7 @@ function updateStatus()
 		local first=true
 		for team,stat in pairs(teamStats) do
 			if not first then g_status_text=g_status_text..'\n\n' end
-			g_status_text=g_status_text..'* Team '..team..' *\n'..stat
+			g_status_text=g_status_text..'* Team '..team..' *'..stat
 			first=false
 		end	
 		showStatus()
