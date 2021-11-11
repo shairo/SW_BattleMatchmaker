@@ -315,6 +315,17 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 	g_status_dirty=true
 end
 
+function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
+	local player=g_players[peer_id]
+	if not player or not player.alive then return end
+
+	local vehicle=registerVehicle(vehicle_id)
+	if vehicle and vehicle.alive then
+		player.vehicle_id=vehicle_id
+	end
+	g_status_dirty=true
+end
+
 function onVehicleDespawn(vehicle_id, peer_id)
 	unregisterVehicle(vehicle_id)
 end
