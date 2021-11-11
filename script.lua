@@ -269,13 +269,6 @@ function onPlayerDie(steam_id, name, peer_id, is_admin, is_auth)
 	kill(peer_id)
 end
 
-function onPlayerRespawn(peer_id)
-	local player=g_players[peer_id]
-	if not player then return end
-
-	player.character_id=server.getPlayerCharacterID(peer_id)
-end
-
 function onButtonPress(vehicle_id, peer_id, button_name)
 	if not peer_id or peer_id<0 then return end
 	if g_savedata.supply_ammo_amount<=0 then return end
@@ -390,16 +383,15 @@ end
 function join(peer_id, team)
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
-	local character_id=server.getPlayerCharacterID(peer_id)
 	local player={
 		name=name,
 		team=team,
 		alive=true,
-		character_id=character_id,
 		vehicle_id=-1,
 	}
 	g_players[peer_id]=player
 
+	local character_id=server.getPlayerCharacterID(peer_id)
 	local vehicle_id, is_success=server.getCharacterVehicle(character_id)
 	if is_success then
 		local vehicle=registerVehicle(vehicle_id)
@@ -537,9 +529,9 @@ function updateVehicle(vehicle)
 	for peer_id,player in pairs(g_players) do
 		if player.vehicle_id==vehicle_id then
 			-- force getout
-			local player_matrix, is_success=server.getObjectPos(player.character_id)
+			local player_matrix, is_success=server.getPlayerPos(peer_id)
 			if is_success then
-				server.setObjectPos(player.character_id, player_matrix)
+				server.setPlayerPos(peer_id, player_matrix)
 			end
 
 			player.vehicle_id=-1
