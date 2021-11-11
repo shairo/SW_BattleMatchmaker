@@ -55,49 +55,49 @@ g_default_savedata={
 g_commands={
 	{
 		name='join',
-		auth=true, admin=false,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			join(target_peer_id or peer_id, team_name)
 		end,
 		args={
 			{name='team_name', type='string', require=true},
-			{name='peer_id', type='number', require=false},
+			{name='peer_id', type='integer', require=false},
 		},
 	},
 	{
 		name='leave',
-		auth=true, admin=false,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			leave(target_peer_id or peer_id)
 		end,
 		args={
-			{name='peer_id', type='number', require=false},
+			{name='peer_id', type='integer', require=false},
 		},
 	},
 	{
 		name='die',
-		auth=true, admin=false,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			kill(target_peer_id or peer_id)
 		end,
 		args={
-			{name='peer_id', type='number', require=false},
+			{name='peer_id', type='integer', require=false},
 		},
 	},
 	{
 		name='order',
-		auth=true, admin=false,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			local player=g_players[peer_id]
 			if not g_savedata.order_command then
-				announce('order command is not available.', peer_id)
+				announce('Order command is not available.', peer_id)
 				return
 			end
 			if player.vehicle_id <= 0 then
-				announce('vehicle not found.', peer_id)
+				announce('Vehicle not found.', peer_id)
 				return
 			end
 			local m=server.getPlayerPos(peer_id)
@@ -105,27 +105,26 @@ g_commands={
 			local m2=matrix.translation(x*8,0,z*8)
 			server.setVehiclePos(player.vehicle_id, matrix.multiply(m2, m))
 			local name=server.getPlayerName(peer_id)
-			announce('vehicle orderd by '..name..'.', -1)
+			announce('Vehicle orderd by '..name..'.', -1)
 		end,
-		args={},
 	},
 	{
 		name='reset',
-		auth=true, admin=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			g_players={}
 			g_vehicles={}
 			g_status_dirty=true
+			announce('Reset game.', -1)
 		end,
-		args={},
 	},
 	{
 		name='sethp',
-		auth=true, admin=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth, hp)
 			g_savedata.base_hp=hp
 			reregisterVehicles()
-			announce('set base vehicle hp to '..tostring(g_savedata.base_hp), -1)
+			announce('Set base vehicle hp to '..tostring(g_savedata.base_hp), -1)
 		end,
 		args={
 			{name='hp', type='integer', require=true},
@@ -133,7 +132,7 @@ g_commands={
 	},
 	{
 		name='setbattery',
-		auth=true, admin=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth, two)
 			if not two then
 				announce('except battery name.', peer_id)
@@ -141,7 +140,7 @@ g_commands={
 			end
 			g_savedata.battery_name=two
 			reregisterVehicles()
-			announce('set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
+			announce('Set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
 		end,
 		args={
 			{name='battery_name', type='string', require=true},
@@ -149,11 +148,11 @@ g_commands={
 	},
 	{
 		name='setammo',
-		auth=true, admin=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth, supply_ammo_amount)
 			g_savedata.supply_ammo_amount=supply_ammo_amount
 			reregisterVehicles()
-			announce('set supply ammo count to '..tostring(g_savedata.supply_ammo_amount), -1)
+			announce('Set supply ammo count to '..tostring(g_savedata.supply_ammo_amount), -1)
 		end,
 		args={
 			{name='supply_ammo_amount', type='integer', require=true},
@@ -161,7 +160,7 @@ g_commands={
 	},
 	{
 		name='setorder',
-		auth=true, admin=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth, enabled)
 			if enabled then
 				announce('order command enabled.', -1)
@@ -191,11 +190,13 @@ function showHelp(peer_id, is_admin, is_auth)
 	for i,command in ipairs(g_commands) do
 		if checkAuth(command, is_admin, is_auth) then
 			local args=''
-			for i,arg in ipairs(command.args) do
-				if arg.require then
-					args=args..' ['..arg.name..']'
-				else
-					args=args..' ('..arg.name..')'
+			if command.args then
+				for i,arg in ipairs(command.args) do
+					if arg.require then
+						args=args..' ['..arg.name..']'
+					else
+						args=args..' ('..arg.name..')'
+					end
 				end
 			end
 			commands_help=commands_help..'  - ?mm '..command.name..args..'\n'
@@ -210,7 +211,7 @@ function showHelp(peer_id, is_admin, is_auth)
 end
 
 function checkAuth(command, is_admin, is_auth)
-	return is_admin or (not command.admin and is_auth) or (not command.auth)
+	return is_admin or (not command.admin and (is_auth or not command.auth))
 end
 
 function checkTargetPeerId(target_peer_id, peer_id, is_admin)
@@ -363,20 +364,22 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 	end
 
 	local args={two, three, four, five}
-	for i,arg_define in ipairs(command_define.args) do
-		if #args < i then
-			if arg_define.require then
-				announce('Argument not enough. Except ['..arg_define.name..'].', peer_id)
+	if command_define.args then
+		for i,arg_define in ipairs(command_define.args) do
+			if #args < i then
+				if arg_define.require then
+					announce('Argument not enough. Except ['..arg_define.name..'].', peer_id)
+					return
+				end
+				break
+			end
+			local value=convert(args[i], arg_define.type)
+			if value==nil then
+				announce('Except '..arg_define.type..' to ['..arg_define.name..'].', peer_id)
 				return
 			end
-			break
+			args[i]=value
 		end
-		local value=convert(args[i], arg_define.type)
-		if value==nil then
-			announce('Except '..arg_define.type..' to ['..arg_define.name..'].', peer_id)
-			return
-		end
-		args[i]=value
 	end
 
 	command_define.action(peer_id, is_admin, is_auth, table.unpack(args))
