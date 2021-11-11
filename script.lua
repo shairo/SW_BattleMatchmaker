@@ -187,11 +187,11 @@ end
 function showHelp(peer_id, is_admin, is_auth)
 	local commands_help='Commands:\n'
 	local any_commands=false
-	for i,command in ipairs(g_commands) do
-		if checkAuth(command, is_admin, is_auth) then
+	for i,command_define in ipairs(g_commands) do
+		if checkAuth(command_define, is_admin, is_auth) then
 			local args=''
-			if command.args then
-				for i,arg in ipairs(command.args) do
+			if command_define.args then
+				for i,arg in ipairs(command_define.args) do
 					if arg.require then
 						args=args..' ['..arg.name..']'
 					else
@@ -199,7 +199,7 @@ function showHelp(peer_id, is_admin, is_auth)
 					end
 				end
 			end
-			commands_help=commands_help..'  - ?mm '..command.name..args..'\n'
+			commands_help=commands_help..'  - ?mm '..command_define.name..args..'\n'
 			any_commands=true
 		end
 	end
@@ -417,12 +417,12 @@ function join(peer_id, team)
 end
 
 function leave(peer_id)
-	local data=g_players[peer_id]
-	if not data then return end
+	local player=g_players[peer_id]
+	if not player then return end
 	g_players[peer_id]=nil
 	g_status_dirty=true
 
-	announce('You leaved from '..data.name..'.', peer_id)
+	announce('You leaved from '..player.name..'.', peer_id)
 end
 
 function kill(peer_id)
