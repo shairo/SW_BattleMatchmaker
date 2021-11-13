@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.3.3
+-- Version 1.4.0
 
 g_players={}
 g_ui_id=0
@@ -94,7 +94,7 @@ g_commands={
 		name='die',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
-			if g_in_game then
+			if not g_in_game then
 				announce('Cannot die before game start.', peer_id)
 				return
 			end
@@ -394,7 +394,7 @@ function onTick()
 			setPopup('countdown', true, string.format('Start in\n%.0f', sec))
 		else
 			startGame()
-			notify('Game Start', "'Let's go!'", 9, -1)
+			notify('Game Start', "Let's go!", 9, -1)
 		end
 	end
 	if g_in_game then
@@ -632,7 +632,7 @@ function kill(peer_id)
 end
 
 function ready(peer_id)
-	if g_in_game or g_in_countdown then return end
+	if g_in_game then return end
 	local player=g_players[peer_id]
 	if not player or player.ready then return end
 	if not player.alive then
@@ -645,7 +645,7 @@ function ready(peer_id)
 end
 
 function wait(peer_id)
-	if g_in_game or not g_in_countdown then return end
+	if g_in_game then return end
 	local player=g_players[peer_id]
 	if not player or not player.ready then return end
 	player.ready=false
@@ -899,6 +899,7 @@ end
 function startGame()
 	g_in_game=true
 	g_in_countdown=false
+	g_status_dirty=true
 	g_timer=g_savedata.game_time_min*60*60//1|0
 	g_remind_interval=g_savedata.remind_time_min*60*60//1|0
 
@@ -908,6 +909,7 @@ end
 function finishGame()
 	g_in_game=false
 	g_in_countdown=false
+	g_status_dirty=true
 	setPopup('countdown', false)
 
 	setSettingsToStandby()
