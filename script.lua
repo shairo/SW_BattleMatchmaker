@@ -132,12 +132,8 @@ g_commands={
 	{
 		name='setbattery',
 		admin=true,
-		action=function(peer_id, is_admin, is_auth, two)
-			if not two then
-				announce('except battery name.', peer_id)
-				return
-			end
-			g_savedata.battery_name=two
+		action=function(peer_id, is_admin, is_auth, battery_name)
+			g_savedata.battery_name=battery_name
 			reregisterVehicles()
 			announce('Set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
 		end,
