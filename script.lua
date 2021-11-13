@@ -6,7 +6,6 @@ g_ui_id=0
 g_status_text=nil
 g_vehicles={}
 g_players={}
-g_bombs={}
 g_status_dirty=false
 
 g_supply_buttons={
@@ -253,8 +252,6 @@ function onTick()
 		g_status_dirty=false
 		updateStatus()
 	end
-
-	updateBomb()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
@@ -534,7 +531,10 @@ function updateVehicle(vehicle)
 	end
 
 	-- explode
-	spawnBomb(vehicle_id)
+	local vehicle_matrix, is_success=server.getVehiclePos(vehicle_id)
+	if is_success then
+		server.spawnExplosion(vehicle_matrix, 0.17)
+	end
 
 	-- kill
 	for peer_id,player in pairs(g_players) do
@@ -609,36 +609,6 @@ function showStatus(regenerate)
 	end
 	if g_status_text then
 		server.setPopupScreen(-1,g_ui_id,'',true,g_status_text,-0.9,0.2)
-	end
-end
-
-function spawnBomb(vehicle_id)
-	local vehicle_matrix, is_success=server.getVehiclePos(vehicle_id)
-	if not is_success then return end
-
-	local object_id, is_success=server.spawnObject(vehicle_matrix, 67)
-	if is_success then
-		table.insert(g_bombs,{
-			vehicle_id=vehicle_id,
-			object_id=object_id,
-			time=100,
-		})
-	end
-end
-
-function updateBomb()
-	local i=#g_bombs
-	while i>0 do
-		local bomb=g_bombs[i]
-		if bomb.time<=0 then
-			local vehicle_matrix, is_success=server.getVehiclePos(bomb.vehicle_id)
-			if is_success then
-				server.setObjectPos(bomb.object_id, vehicle_matrix)
-			end
-		else
-			bomb.time=bomb.time-1
-		end
-		i=i-1
 	end
 end
 
