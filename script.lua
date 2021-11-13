@@ -91,12 +91,20 @@ g_commands={
 		name='order',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			local player=g_players[peer_id]
 			if not g_savedata.order_command then
 				announce('Order command is not available.', peer_id)
 				return
 			end
-			if player.vehicle_id <= 0 then
+			local player=g_players[peer_id]
+			if not player then
+				announce('Joind player not found. peer_id:'..tostring(peer_id), peer_id)
+				return
+			end
+			if not player.alive then
+				announce('Dead player cannot order vehicle.', peer_id)
+				return
+			end
+			if player.vehicle_id<=0 then
 				announce('Vehicle not found.', peer_id)
 				return
 			end
