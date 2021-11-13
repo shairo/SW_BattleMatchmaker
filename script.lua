@@ -178,7 +178,7 @@ g_commands={
 		name='resume',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
-			resume()
+			resume(true, peer_id)
 		end,
 	},
 	{
@@ -805,18 +805,26 @@ function playerToString(name, alive, ready, hp, bat)
 	return name..'\nStat:'..stat_text..hp_text..battery_text
 end
 
-function resume()
+function resume(force, peer_id)
 	if g_in_game or g_in_countdown then return end
 	local ready=true
-	local count=0
+	local teams={}
 	for peer_id,player in pairs(g_players) do
 		ready=ready and player.ready
-		count=count+1
+		teams[player.team]=true
 	end
 	if not ready then
+		if force then
+			announce('There is unready player(s).', peer_id)
+		end
 		return
 	end
-	if count<1 then
+
+	local team_count=getTableCount(teams)
+	if team_count<1 or (team_count<2 and not force) then
+		if force then
+			announce('There are not enough registered teams.', peer_id)
+		end
 		return
 	end
 	announce('Countdown start.', -1)
@@ -929,6 +937,14 @@ end
 function notify(title, text, type, peer_id)
 	server.notify(-1, title, text, type)
 	announce(title..' '..text, peer_id)
+end
+
+function getTableCount(table)
+	local count=0
+	for idx,p in pairs(table) do
+		count=count+1
+	end
+	return count
 end
 
 function clamp(x,a,b)
