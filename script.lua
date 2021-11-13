@@ -402,7 +402,7 @@ function onTick()
 			setPopup('countdown', true, string.format('Start in\n%.0f', sec))
 		else
 			startGame()
-			notify('Game Start', "Let's go!", 9, -1)
+			notify('Game Start', 'Panzer Vor!', 9, -1)
 		end
 	end
 	if g_in_game then
@@ -617,7 +617,7 @@ function leave(peer_id)
 	g_players[peer_id]=nil
 	g_status_dirty=true
 
-	announce('You leaved from '..player.name..'.', peer_id)
+	announce('You leaved from '..player.team..'.', peer_id)
 
 	if g_in_game then
 		g_finish_dirty=true
@@ -898,10 +898,6 @@ function checkFinish()
 	else
 		notify('Game End', 'Draw Game!', 9, -1)
 	end
-
-	for _,player in pairs(g_players) do
-		player.ready=false
-	end
 end
 
 function startGame()
@@ -910,6 +906,10 @@ function startGame()
 	g_status_dirty=true
 	g_timer=g_savedata.game_time_min*60*60//1|0
 	g_remind_interval=g_savedata.remind_time_min*60*60//1|0
+
+	for _,player in pairs(g_players) do
+		player.ready=false
+	end
 
 	setSettingsToBattle()
 end
