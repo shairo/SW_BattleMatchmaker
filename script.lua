@@ -170,14 +170,14 @@ g_commands={
 	},
 	{
 		name='pause',
-		admin=true,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			pause()
 		end,
 	},
 	{
 		name='resume',
-		admin=true,
+		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			resume(true, peer_id)
 		end,
