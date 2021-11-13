@@ -195,6 +195,14 @@ g_commands={
 		end,
 	},
 	{
+		name='reset_ui',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			renewPopupIds()
+			announce('Refresh ui ids.', -1)
+		end,
+	},
+	{
 		name='set_hp',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, hp)
