@@ -5,6 +5,7 @@ g_players={}
 g_ui_id=0
 g_status_text=nil
 g_vehicles={}
+g_spawned_vehicles={}
 g_players={}
 g_status_dirty=false
 
@@ -309,6 +310,15 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
+	if not peer_id or peer_id<0 then return end
+	g_spawned_vehicles[vehicle_id]=peer_id
+end
+
+function onVehicleLoad(vehicle_id)
+	local peer_id=g_spawned_vehicles[vehicle_id]
+	if not peer_id then return end
+
+	g_spawned_vehicles[vehicle_id]=nil
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 
@@ -320,6 +330,7 @@ function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
+	g_spawned_vehicles[vehicle_id]=nil
 	unregisterVehicle(vehicle_id)
 end
 
