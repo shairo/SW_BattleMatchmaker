@@ -620,7 +620,11 @@ end
 function ready(peer_id)
 	if g_in_game or g_in_countdown then return end
 	local player=g_players[peer_id]
-	if not player then return end
+	if not player or player.ready then return end
+	if not player.alive then
+		announce('Cannot ready for dead player.', peer_id)
+		return
+	end
 	player.ready=true
 	resume()
 	g_status_dirty=true
@@ -629,7 +633,7 @@ end
 function wait(peer_id)
 	if g_in_game or not g_in_countdown then return end
 	local player=g_players[peer_id]
-	if not player then return end
+	if not player or not player.ready then return end
 	player.ready=false
 	pause()
 	g_status_dirty=true
