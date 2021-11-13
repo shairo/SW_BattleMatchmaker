@@ -869,7 +869,11 @@ function checkFinish()
 		team_aliver_counts[player.team]=count and (count+add) or add
 		any=true
 	end
-	if not any then return end
+	if not any then
+		finishGame()
+		notify('Game End', 'No player. Game is interrupted.', 6, -1)
+		return
+	end
 	local alive_team_count=0
 	local alive_team_name=''
 	for team_name,team_aliver_count in pairs(team_aliver_counts) do
@@ -990,7 +994,7 @@ end
 
 function notify(title, text, type, peer_id)
 	server.notify(-1, title, text, type)
-	announce(title..' '..text, peer_id)
+	announce(title..'\n'..text, peer_id)
 end
 
 function getTableCount(table)
