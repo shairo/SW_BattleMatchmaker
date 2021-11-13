@@ -53,10 +53,11 @@ g_default_savedata={
 	base_hp=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	battery_name='killed',
 	supply_ammo_amount=property.slider('Default Ammo Supply', 0, 100, 1, 40),
-	order_command=true,
-	cd_time_sec=property.slider('Count down time (sec)', 5, 60, 1, 10),
-	game_time_min=property.slider('Game time (min)', 1, 60, 1, 20),
-	remind_time_min=property.slider('Game time remind interval (min)', 1, 10, 1, 1)
+	order_command=property.checkbox('Default Order Command Enabled', true),
+	cd_time_sec=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
+	game_time_min=property.slider('Default Game time (min)', 1, 60, 1, 20),
+	remind_time_min=property.slider('Default Remind time (min)', 1, 10, 1, 1),
+	tps_enable=property.checkbox('Default Third Person Enabled', false),
 }
 
 -- Commands --
@@ -187,11 +188,9 @@ g_commands={
 		action=function(peer_id, is_admin, is_auth)
 			g_players={}
 			g_vehicles={}
-			g_in_game=false
-			g_in_countdown=false
 			g_status_dirty=true
 			setPopup('status', false)
-			setPopup('countdown', false)
+			finishGame()
 			announce('Reset game.', -1)
 		end,
 	},
@@ -256,7 +255,7 @@ g_commands={
 				return
 			end
 			g_savedata.cd_time_sec=cd_time_sec
-			announce('Set count down time to '..tostring(cd_time_sec)..' sec.', -1)
+			announce('Set countdown time to '..tostring(cd_time_sec)..' sec.', -1)
 		end,
 		args={
 			{name='second', type='number', require=true},
@@ -290,6 +289,22 @@ g_commands={
 		end,
 		args={
 			{name='minute', type='number', require=true},
+		},
+	},
+	{
+		name='set_tps',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, enabled)
+			if enabled then
+				announce('Third person enabled.', -1)
+				g_savedata.tps_enable=true
+			else
+				announce('Third person disabled.', -1)
+				g_savedata.tps_enable=false
+			end
+		end,
+		args={
+			{name='true|false', type='boolean', require=true},
 		},
 	},
 }
@@ -357,6 +372,8 @@ function onCreate(is_world_create)
 
 	registerPopup('status', -0.9, 0.2)
 	registerPopup('countdown', 0, 0.7)
+
+	setSettingsToStandby()
 end
 
 function onDestroy()
@@ -376,10 +393,7 @@ function onTick()
 			g_countdown_text=string.format('Start in\n%.0f', sec)
 			setPopup('countdown', true, string.format('Start in\n%.0f', sec))
 		else
-			g_in_countdown=false
-			g_in_game=true
-			g_timer=g_savedata.game_time_min*60*60//1|0
-			g_remind_interval=g_savedata.remind_time_min*60*60//1|0
+			startGame()
 			notify('Game Start', "'Let's go!'", 9, -1)
 		end
 	end
@@ -394,9 +408,8 @@ function onTick()
 				server.notify(-1, 'Time reminder', time_text..' left.', 1)
 			end
 		else
-			g_in_game=false
+			finishGame()
 			notify('Game End', 'Timeup!', 9, -1)
-			setPopup('countdown', false)
 		end
 	end
 
@@ -522,7 +535,8 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 			'  - order command enabled: '..tostring(g_savedata.order_command)..'\n'..
 			'  - countdown time: '..tostring(g_savedata.cd_time_sec)..'sec\n'..
 			'  - game time: '..tostring(g_savedata.game_time_min)..'min\n'..
-			'  - remind time: '..tostring(g_savedata.remind_time_min)..'min',
+			'  - remind time: '..tostring(g_savedata.remind_time_min)..'min\n'..
+			'  - third person enabled: '..tostring(g_savedata.tps_enable),
 			peer_id)
 		return
 	end
@@ -866,20 +880,56 @@ function checkFinish()
 	end
 	if alive_team_count>1 then return end
 
+	finishGame()
 	if alive_team_count==1 then
 		notify('Game End', 'Team '..alive_team_name..' Win!', 9, -1)
 	else
 		notify('Game End', 'Draw Game!', 9, -1)
 	end
-	setPopup('countdown', false)
-	g_in_game=false
 
 	for _,player in pairs(g_players) do
 		player.ready=false
 	end
 end
 
+function startGame()
+	g_in_game=true
+	g_in_countdown=false
+	g_timer=g_savedata.game_time_min*60*60//1|0
+	g_remind_interval=g_savedata.remind_time_min*60*60//1|0
+
+	setSettingsToBattle()
+end
+
+function finishGame()
+	g_in_game=false
+	g_in_countdown=false
+	setPopup('countdown', false)
+
+	setSettingsToStandby()
+end
+
+function setSettingsToBattle()
+	local tps_enable=g_savedata.tps_enable
+    server.setGameSetting('third_person', tps_enable)
+    server.setGameSetting('third_person_vehicle', tps_enable)
+    server.setGameSetting('vehicle_damage', true)
+    server.setGameSetting('player_damage', true)
+    server.setGameSetting('map_show_players', false)
+    server.setGameSetting('map_show_vehicles', false)
+end
+
+function setSettingsToStandby()
+    server.setGameSetting('third_person', true)
+    server.setGameSetting('third_person_vehicle', true)
+    server.setGameSetting('vehicle_damage', false)
+    server.setGameSetting('player_damage', false)
+    server.setGameSetting('map_show_players', true)
+    server.setGameSetting('map_show_vehicles', true)
+end
+
 -- UI
+
 function registerPopup(name, x, y)
 	table.insert(g_popups, {
 		name=name,
