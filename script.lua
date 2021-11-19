@@ -159,10 +159,13 @@ g_commands={
 				announce('Vehicle not found.', peer_id)
 				return
 			end
-			local m=server.getPlayerPos(peer_id)
+
 			local x, y, z=server.getPlayerLookDirection(peer_id)
-			local m2=matrix.translation(x*8,0,z*8)
-			server.setVehiclePos(player.vehicle_id, matrix.multiply(m2, m))
+			local position=server.getPlayerPos(peer_id)
+			local offset=matrix.translation(0,1,8)
+			local rotation=matrix.rotationToFaceXZ(x, z)
+			local m=matrix.multiply(position, matrix.multiply(rotation, offset))
+			server.setVehiclePos(player.vehicle_id,m)
 			local name=server.getPlayerName(peer_id)
 			announce('Vehicle orderd by '..name..'.', -1)
 		end,
