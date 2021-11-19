@@ -919,40 +919,38 @@ function finishGame()
 	g_status_dirty=true
 	setPopup('countdown', false)
 
-	local count=0
-    for _ in pairs(server.getPlayers()) do
-        count=count+1
-        local id=server.getPlayers()[count]["id"]
-        local object_id,is_success=server.getPlayerCharacterID(id)
-        if is_success then
-            server.setCharacterData(object_id,100,false,false)
-            server.setCharacterItem(object_id,2,15,false,0,100)--flashlight
-            server.setCharacterItem(object_id,3,6,false,0,0)--binoculars
-            server.setCharacterItem(object_id,4,8,false,0,0)--compass
-            server.announce("[Matchmaker]",server.getPlayerName(id).." has been recovered.",id)--debug
-        end
-    end
+	for i,player in pairs(server.getPlayers()) do
+		local peer_id=player.id
+		local object_id, is_success=server.getPlayerCharacterID(peer_id)
+		if is_success then
+			server.setCharacterData(object_id, 100, false, false)
+			server.setCharacterItem(object_id, 2, 15, false, 0, 100)--flashlight
+			server.setCharacterItem(object_id, 3, 6, false, 0, 0)--binoculars
+			server.setCharacterItem(object_id, 4, 8, false, 0, 0)--compass
+			announce("You are recovered.", peer_id)
+		end
+	end
 
 	setSettingsToStandby()
 end
 
 function setSettingsToBattle()
 	local tps_enable=g_savedata.tps_enable
-    server.setGameSetting('third_person', tps_enable)
-    server.setGameSetting('third_person_vehicle', tps_enable)
-    server.setGameSetting('vehicle_damage', true)
-    server.setGameSetting('player_damage', true)
-    server.setGameSetting('map_show_players', false)
-    server.setGameSetting('map_show_vehicles', false)
+	server.setGameSetting('third_person', tps_enable)
+	server.setGameSetting('third_person_vehicle', tps_enable)
+	server.setGameSetting('vehicle_damage', true)
+	server.setGameSetting('player_damage', true)
+	server.setGameSetting('map_show_players', false)
+	server.setGameSetting('map_show_vehicles', false)
 end
 
 function setSettingsToStandby()
-    server.setGameSetting('third_person', true)
-    server.setGameSetting('third_person_vehicle', true)
-    server.setGameSetting('vehicle_damage', false)
-    server.setGameSetting('player_damage', false)
-    server.setGameSetting('map_show_players', true)
-    server.setGameSetting('map_show_vehicles', true)
+	server.setGameSetting('third_person', true)
+	server.setGameSetting('third_person_vehicle', true)
+	server.setGameSetting('vehicle_damage', false)
+	server.setGameSetting('player_damage', false)
+	server.setGameSetting('map_show_players', true)
+	server.setGameSetting('map_show_vehicles', true)
 end
 
 -- UI
