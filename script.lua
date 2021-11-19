@@ -7,7 +7,6 @@ g_popups={}
 g_status_text=nil
 g_vehicles={}
 g_spawned_vehicles={}
-g_players={}
 g_status_dirty=false
 g_finish_dirty=false
 g_in_game=false
@@ -919,6 +918,20 @@ function finishGame()
 	g_in_countdown=false
 	g_status_dirty=true
 	setPopup('countdown', false)
+
+	local count=0
+    for _ in pairs(server.getPlayers()) do
+        count=count+1
+        local id=server.getPlayers()[count]["id"]
+        local object_id,is_success=server.getPlayerCharacterID(id)
+        if is_success then
+            server.setCharacterData(object_id,100,false,false)
+            server.setCharacterItem(object_id,2,15,false,0,100)--flashlight
+            server.setCharacterItem(object_id,3,6,false,0,0)--binoculars
+            server.setCharacterItem(object_id,4,8,false,0,0)--compass
+            server.announce("[Matchmaker]",server.getPlayerName(id).." has been recovered.",id)--debug
+        end
+    end
 
 	setSettingsToStandby()
 end
