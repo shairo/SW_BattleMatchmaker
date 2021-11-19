@@ -159,10 +159,13 @@ g_commands={
 				announce('Vehicle not found.', peer_id)
 				return
 			end
-			local m=server.getPlayerPos(peer_id)
+
 			local x, y, z=server.getPlayerLookDirection(peer_id)
-			local m2=matrix.translation(x*8,0,z*8)
-			server.setVehiclePos(player.vehicle_id, matrix.multiply(m2, m))
+			local position=server.getPlayerPos(peer_id)
+			local offset=matrix.translation(0,1,8)
+			local rotation=matrix.rotationToFaceXZ(x, z)
+			local m=matrix.multiply(position, matrix.multiply(rotation, offset))
+			server.setVehiclePos(player.vehicle_id,m)
 			local name=server.getPlayerName(peer_id)
 			announce('Vehicle orderd by '..name..'.', -1)
 		end,
@@ -633,6 +636,7 @@ function kill(peer_id)
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 	player.alive=false
+	player.vehicle_id=-1
 	g_status_dirty=true
 	notify('Kill Log', player.name..' is dead.', 9, -1)
 	g_finish_dirty=true
@@ -674,6 +678,7 @@ end
 function registerVehicle(vehicle_id)
 	local vehicle=findVehicle(vehicle_id)
 	if vehicle then return vehicle end
+	if g_in_game then return end
 
 	vehicle={
 		vehicle_id=vehicle_id,
@@ -705,9 +710,12 @@ function unregisterVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
 
-	for _,player in pairs(g_players) do
+	for peer_id,player in pairs(g_players) do
 		if player.vehicle_id==vehicle_id then
 			player.vehicle_id=-1
+			if g_in_game then
+				kill(peer_id)
+			end
 		end
 	end
 
