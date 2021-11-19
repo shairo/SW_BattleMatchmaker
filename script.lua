@@ -678,6 +678,7 @@ end
 function registerVehicle(vehicle_id)
 	local vehicle=findVehicle(vehicle_id)
 	if vehicle then return vehicle end
+	if g_in_game then return end
 
 	vehicle={
 		vehicle_id=vehicle_id,
