@@ -709,9 +709,12 @@ function unregisterVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
 
-	for _,player in pairs(g_players) do
+	for peer_id,player in pairs(g_players) do
 		if player.vehicle_id==vehicle_id then
 			player.vehicle_id=-1
+			if g_in_game then
+				kill(peer_id)
+			end
 		end
 	end
 
