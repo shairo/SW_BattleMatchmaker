@@ -929,7 +929,7 @@ function finishGame()
             server.setCharacterItem(object_id,2,15,false,0,100)--flashlight
             server.setCharacterItem(object_id,3,6,false,0,0)--binoculars
             server.setCharacterItem(object_id,4,8,false,0,0)--compass
-            server.announce("[Matchmaker]",server.getPlayerName(id).." has been recovered.",-1)--debug
+            server.announce("[Matchmaker]",server.getPlayerName(id).." has been recovered.",id)--debug
         end
     end
 
