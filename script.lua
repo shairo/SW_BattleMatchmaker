@@ -636,6 +636,7 @@ function kill(peer_id)
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 	player.alive=false
+	player.vehicle_id=-1
 	g_status_dirty=true
 	notify('Kill Log', player.name..' is dead.', 9, -1)
 	g_finish_dirty=true
