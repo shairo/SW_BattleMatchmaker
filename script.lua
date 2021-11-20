@@ -71,6 +71,9 @@ g_default_savedata={
 	game_time_min=property.slider('Default Game time (min)', 1, 60, 1, 20),
 	remind_time_min=property.slider('Default Remind time (min)', 1, 10, 1, 1),
 	tps_enable=property.checkbox('Default Third Person Enabled', false),
+	extinguisher_volume=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
+	torch_volume=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
+	welder_volume=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
 }
 
 -- Commands --
@@ -386,6 +389,42 @@ g_commands={
 			{name='true|false', type='boolean', require=true},
 		},
 	},
+	{
+		name='set_ext_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.extinguisher_volume=volume
+			announce('Set extinguisher volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
+	{
+		name='set_torch_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.torch_volume=volume
+			announce('Set torch volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
+	{
+		name='set_welder_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.welder_volume=volume
+			announce('Set welder volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
 }
 
 function findCommand(command)
@@ -528,12 +567,20 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		if not server.getVehicleButton(vehicle_id, button_name).on then return end
 		local item_supply=g_item_supply_buttons[button_name]
 		if item_supply then
-			local slot=findEmptySlot(character_id, item_supply[1])
+			local slot,equipment_id,v1,v2=table.unpack(item_supply)
+			slot=findEmptySlot(character_id, slot)
 			if not slot then
 				announce('Inventory is full.', peer_id)
 				return
 			end
-			server.setCharacterItem(character_id, slot, item_supply[2], false, item_supply[3], item_supply[4])
+			if equipment_id==10 then
+				v2=v2*g_savedata.extinguisher_volume*0.01
+			elseif equipment_id==27 then
+				v2=v2*g_savedata.torch_volume*0.01
+			elseif equipment_id==26 then
+				v2=v2*g_savedata.welder_volume*0.01
+			end
+			server.setCharacterItem(character_id, slot, equipment_id, false, v1, v2)
 		elseif button_name=='Join RED' then
 			join(peer_id, 'RED')
 		elseif button_name=='Join BLUE' then
@@ -652,7 +699,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 			'  - countdown time: '..tostring(g_savedata.cd_time_sec)..'sec\n'..
 			'  - game time: '..tostring(g_savedata.game_time_min)..'min\n'..
 			'  - remind time: '..tostring(g_savedata.remind_time_min)..'min\n'..
-			'  - third person enabled: '..tostring(g_savedata.tps_enable),
+			'  - third person enabled: '..tostring(g_savedata.tps_enable)..'\n'..
+			'  - extinguisher volume: '..tostring(g_savedata.extinguisher_volume)..'%\n'..
+			'  - torch volume: '..tostring(g_savedata.torch_volume)..'%\n'..
+			'  - welder volume: '..tostring(g_savedata.welder_volume)..'%',
 			peer_id)
 		return
 	end
