@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.4.0
+-- Version 1.5.0
 
 g_players={}
 g_ui_id=0
@@ -13,9 +13,6 @@ g_in_game=false
 g_in_countdown=false
 g_timer=0
 g_remind_interval=3600
-
-g_supply_vehicles={}
-g_flag_vehicles={}
 
 g_ammo_supply_buttons={
 	MG_K={42,50},
@@ -74,6 +71,8 @@ g_default_savedata={
 	extinguisher_volume=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
 	torch_volume=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
 	welder_volume=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
+	supply_vehicles={},
+	flag_vehicles={},
 }
 
 -- Commands --
@@ -1178,27 +1177,27 @@ function spawnSupply(peer_id)
 	despawnSupply(peer_id)
 	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
 	if vehicle_id then
-		g_supply_vehicles[peer_id]=vehicle_id
+		g_savedata.supply_vehicles[peer_id]=vehicle_id
 	end
 end
 
 function despawnSupply(peer_id)
-	local vehicle_id=g_supply_vehicles[peer_id]
+	local vehicle_id=g_savedata.supply_vehicles[peer_id]
 	if vehicle_id then
 		server.despawnVehicle(vehicle_id, true)
-		g_supply_vehicles[peer_id]=nil
+		g_savedata.supply_vehicles[peer_id]=nil
 	end
 end
 
 function clearSupplies()
-	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
 		server.despawnVehicle(vehicle_id, true)
 	end
-	g_supply_vehicles={}
+	g_savedata.supply_vehicles={}
 end
 
 function isSupply(check_vehicle_id)
-	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
 		if vehicle_id==check_vehicle_id then
 			return true
 		end
@@ -1217,7 +1216,7 @@ function spawnFlag(peer_id, name)
 		local x,y,z=matrix.position(vehicle_matrix)
 		local r,g,b,a=getColor(name)
 		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 10, name, r, g, b, a)
-		g_flag_vehicles[name]={
+		g_savedata.flag_vehicles[name]={
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
 		}
@@ -1225,20 +1224,20 @@ function spawnFlag(peer_id, name)
 end
 
 function despawnFlag(peer_id, name)
-	local flag=g_flag_vehicles[name]
+	local flag=g_savedata.flag_vehicles[name]
 	if flag then
 		server.despawnVehicle(flag.vehicle_id, true)
 		server.removeMapID(-1, flag.ui_id)
-		g_flag_vehicles[name]=nil
+		g_savedata.flag_vehicles[name]=nil
 	end
 end
 
 function clearFlags()
-	for name,flag in pairs(g_flag_vehicles) do
+	for name,flag in pairs(g_savedata.flag_vehicles) do
 		server.despawnVehicle(flag.vehicle_id, true)
 		server.removeMapID(-1, flag.ui_id)
 	end
-	g_flag_vehicles={}
+	g_savedata.flag_vehicles={}
 end
 
 -- Utility Functions --
