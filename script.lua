@@ -16,7 +16,7 @@ g_remind_interval=3600
 
 g_supply_vehicles={}
 
-g_supply_buttons={
+g_ammo_supply_buttons={
 	MG_K={42,50},
 	MG_AP={45,50},
 	MG_I={46,50},
@@ -48,6 +48,17 @@ g_supply_buttons={
 	AS_HE={68,1},
 	AS_F={66,1},
 	AS_AP={70,1},
+}
+
+g_item_supply_buttons={
+	['Take Extinguisher']={1,10,0,9},
+	['Take Torch']       ={1,27,0,400},
+	['Take Welder']      ={1,26,0,250},
+	['Take FlashLight']  ={2,15,0,100},
+	['Take Binoculars']  ={2,6, 0,0},
+	['Take NightVision'] ={2,17,0,100},
+	['Take Compass']     ={2,8 ,0,0},
+	['Take FirstAidKit'] ={2,11,4,0},
 }
 
 g_default_savedata={
@@ -478,14 +489,49 @@ end
 
 function onButtonPress(vehicle_id, peer_id, button_name)
 	if not peer_id or peer_id<0 then return end
+	local character_id, is_success=server.getPlayerCharacterID(peer_id)
+	if not is_success then return end
+
+	if isSupply(vehicle_id) then
+		if not server.getVehicleButton(vehicle_id, button_name).on then return end
+		local item_supply=g_item_supply_buttons[button_name]
+		if item_supply then
+			local slot=findEmptySlot(character_id, item_supply[1])
+			if not slot then
+				announce('Inventory is full.', peer_id)
+				return
+			end
+			server.setCharacterItem(character_id, slot, item_supply[2], false, item_supply[3], item_supply[4])
+		elseif button_name=='Join RED' then
+			join(peer_id, 'RED')
+		elseif button_name=='Join BLUE' then
+			join(peer_id, 'BLUE')
+		elseif button_name=='Join PINK' then
+			join(peer_id, 'PINK')
+		elseif button_name=='Join YLW' then
+			join(peer_id, 'YLW')
+		elseif button_name=='Leave' then
+			leave(peer_id)
+		elseif button_name=='Clear Large Equipment' then
+			server.setCharacterItem(character_id, 1, 0, false)
+		elseif button_name=='Clear Small Equipments' then
+			server.setCharacterItem(character_id, 2, 0, false)
+			server.setCharacterItem(character_id, 3, 0, false)
+			server.setCharacterItem(character_id, 4, 0, false)
+			server.setCharacterItem(character_id, 5, 0, false)
+		elseif button_name=='Clear Outfit' then
+			server.setCharacterItem(character_id, 6, 0, false)
+		end
+		return
+	end
+
 	if g_savedata.supply_ammo_amount<=0 then return end
 
-	local equipment_data=g_supply_buttons[button_name]
+	local equipment_data=g_ammo_supply_buttons[button_name]
 	if not equipment_data then return end
 	local equipment_id=equipment_data[1]
 	local equipment_amount=equipment_data[2]
 
-	local character_id=server.getPlayerCharacterID(peer_id)
 	local current_equipment_id=server.getCharacterItem(character_id, 1)
 	if current_equipment_id>0 then
 		if current_equipment_id~=equipment_id then
@@ -1139,4 +1185,23 @@ function clearSupplies()
 		server.despawnVehicle(vehicle_id, true)
 	end
 	g_supply_vehicles={}
+end
+
+function isSupply(check_vehicle_id)
+	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+		if vehicle_id==check_vehicle_id then
+			return true
+		end
+	end
+	return false
+end
+
+function findEmptySlot(object_id, slot)
+	local equipment_id=server.getCharacterItem(object_id, slot)
+	if equipment_id==0 then
+		return slot
+	end
+	if slot>=2 and slot<5 then
+		return findEmptySlot(object_id, slot+1)
+	end
 end
