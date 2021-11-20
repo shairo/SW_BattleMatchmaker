@@ -15,6 +15,7 @@ g_timer=0
 g_remind_interval=3600
 
 g_supply_vehicles={}
+g_flag_vehicles={}
 
 g_ammo_supply_buttons={
 	MG_K={42,50},
@@ -193,7 +194,7 @@ g_commands={
 		end,
 	},
 	{
-		name='call_supply',
+		name='supply',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			if g_in_game then
@@ -218,7 +219,36 @@ g_commands={
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			clearSupplies()
+			clearFlags()
 			announce('All supplies cleared.', -1)
+		end,
+	},
+	{
+		name='flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, name)
+			spawnFlag(peer_id, name)
+		end,
+		args={
+			{name='name', type='string', require=true},
+		},
+	},
+	{
+		name='delete_flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, name)
+			despawnFlag(peer_id, name)
+		end,
+		args={
+			{name='name', type='string', require=true},
+		},
+	},
+	{
+		name='clear_flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			clearFlags()
+			announce('All flags cleared.', -1)
 		end,
 	},
 	{
@@ -230,6 +260,7 @@ g_commands={
 			g_status_dirty=true
 			setPopup('status', false)
 			clearSupplies()
+			clearFlags()
 			finishGame()
 			announce('Reset game.', -1)
 		end,
@@ -428,6 +459,7 @@ function onDestroy()
 	server.removePopup(-1, g_ui_id)
 	clearPopups()
 	clearSupplies()
+	clearFlags()
 end
 
 function onTick()
@@ -1090,6 +1122,75 @@ function clearPopups()
 	g_popups={}
 end
 
+-- Support vehicle
+
+function spawnSupply(peer_id)
+	despawnSupply(peer_id)
+	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
+	if vehicle_id then
+		g_supply_vehicles[peer_id]=vehicle_id
+	end
+end
+
+function despawnSupply(peer_id)
+	local vehicle_id=g_supply_vehicles[peer_id]
+	if vehicle_id then
+		server.despawnVehicle(vehicle_id, true)
+		g_supply_vehicles[peer_id]=nil
+	end
+end
+
+function clearSupplies()
+	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+		server.despawnVehicle(vehicle_id, true)
+	end
+	g_supply_vehicles={}
+end
+
+function isSupply(check_vehicle_id)
+	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+		if vehicle_id==check_vehicle_id then
+			return true
+		end
+	end
+	return false
+end
+
+function spawnFlag(peer_id, name)
+	despawnFlag(peer_id, name)
+	local vehicle_matrix=getAheadMatrix(peer_id, 9, 8)
+	local vehicle_id=spawnAddonVehicle('flag', vehicle_matrix)
+
+	if vehicle_id then
+		server.setVehicleTooltip(vehicle_id, name)
+		local ui_id=server.getMapID()
+		local x,y,z=matrix.position(vehicle_matrix)
+		local r,g,b,a=getColor(name)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 10, name, r, g, b, a)
+		g_flag_vehicles[name]={
+			vehicle_id=vehicle_id,
+			ui_id=ui_id,
+		}
+	end
+end
+
+function despawnFlag(peer_id, name)
+	local flag=g_flag_vehicles[name]
+	if flag then
+		server.despawnVehicle(flag.vehicle_id, true)
+		server.removeMapID(-1, flag.ui_id)
+		g_flag_vehicles[name]=nil
+	end
+end
+
+function clearFlags()
+	for name,flag in pairs(g_flag_vehicles) do
+		server.despawnVehicle(flag.vehicle_id, true)
+		server.removeMapID(-1, flag.ui_id)
+	end
+	g_flag_vehicles={}
+end
+
 -- Utility Functions --
 
 function announce(text, peer_id)
@@ -1164,38 +1265,6 @@ function spawnAddonVehicle(name, transform_matrix)
 	end
 end
 
-function spawnSupply(peer_id)
-	despawnSupply(peer_id)
-	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
-	if vehicle_id then
-		g_supply_vehicles[peer_id]=vehicle_id
-	end
-end
-
-function despawnSupply(peer_id)
-	local vehicle_id=g_supply_vehicles[peer_id]
-	if vehicle_id then
-		server.despawnVehicle(vehicle_id, true)
-		g_supply_vehicles[peer_id]=nil
-	end
-end
-
-function clearSupplies()
-	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
-		server.despawnVehicle(vehicle_id, true)
-	end
-	g_supply_vehicles={}
-end
-
-function isSupply(check_vehicle_id)
-	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
-		if vehicle_id==check_vehicle_id then
-			return true
-		end
-	end
-	return false
-end
-
 function findEmptySlot(object_id, slot)
 	local equipment_id=server.getCharacterItem(object_id, slot)
 	if equipment_id==0 then
@@ -1205,3 +1274,23 @@ function findEmptySlot(object_id, slot)
 		return findEmptySlot(object_id, slot+1)
 	end
 end
+
+function getColor(name)
+	name=string.lower(name)
+	local color=g_colors[name]
+	if color then
+		return table.unpack(color)
+	end
+	return 255,127,39,255
+end
+
+g_colors={
+	red   ={255,0  ,0,  255},
+	green ={0,  255,0,  255},
+	blue  ={0,  0,  255,255},
+	yellow={255,255,0,  255},
+	ylw   ={255,255,0,  255},
+	pink  ={255,0,  255,255},
+	white ={255,255,255,255},
+	black ={0,  0,  0,  255},
+}
