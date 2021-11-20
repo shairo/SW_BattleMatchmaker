@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <playlist path_id="app_data/data/missions/SW_BattleMatchmaker" folder_path="data/missions/SW_BattleMatchmaker" file_store="4" name="Battle Matchmaker">
-	<locations location_id_counter="0" component_id_counter="0">
-		<locations/>
+	<locations location_id_counter="2" component_id_counter="1">
+		<locations>
+			<l id="1" tile="" name="Supply" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="3" id="1" vehicle_parent_id="0" name="name=supply" display_name="" is_sea_floor_object="false" show_zone_on_map="false" zone_type="0" zone_radius="2.5" dynamic_object_type="2" loot_type="0" character_outfit_category="11" character_type="1" character_special_outfit="0" vehicle_file_name="data/missions_working/vehicle_1.xml" vehicle_file_store="4" vehicle_is_static="true" vehicle_is_no_sleep="false" vehicle_is_editable="false" vehicle_is_show_on_map="false" vehicle_is_transponder_active="false" is_fire_lit="true" is_explosion="false" explosion_magnitude="1" flare_hue="0" is_flare_lit="true" vehicle_button_name="" ice_type="0" ice_scale="1" animal_type="0">
+						<spawn_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="0" 31="0" 32="0" 33="1"/>
+						<spawn_bounds>
+							<min x="-7.625" y="-0.375" z="-1.125"/>
+							<max x="7.625" y="2.875" z="1.375"/>
+						</spawn_bounds>
+						<vehicle_parent_transform 00="1" 01="0" 02="0" 03="0" 10="0" 11="1" 12="0" 13="0" 20="0" 21="0" 22="1" 23="0" 30="0" 31="0" 32="0" 33="1"/>
+						<spawn_local_offset x="-0" y="-1.25" z="-0.125"/>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+		</locations>
 	</locations>
 </playlist>
 

@@ -14,6 +14,8 @@ g_in_countdown=false
 g_timer=0
 g_remind_interval=3600
 
+g_supply_vehicles={}
+
 g_supply_buttons={
 	MG_K={42,50},
 	MG_AP={45,50},
@@ -160,12 +162,7 @@ g_commands={
 				return
 			end
 
-			local x, y, z=server.getPlayerLookDirection(peer_id)
-			local position=server.getPlayerPos(peer_id)
-			local offset=matrix.translation(0,1,8)
-			local rotation=matrix.rotationToFaceXZ(x, z)
-			local m=matrix.multiply(position, matrix.multiply(rotation, offset))
-			server.setVehiclePos(player.vehicle_id,m)
+			server.setVehiclePos(player.vehicle_id, getAheadMatrix(peer_id, 2, 8))
 			local name=server.getPlayerName(peer_id)
 			announce('Vehicle orderd by '..name..'.', -1)
 		end,
@@ -185,6 +182,35 @@ g_commands={
 		end,
 	},
 	{
+		name='call_supply',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			if g_in_game then
+				announce('Cannot call supply after game start.', peer_id)
+				return
+			end
+			spawnSupply(peer_id)
+
+			local name=server.getPlayerName(peer_id)
+			announce(name..' called supply object.', -1)
+		end,
+	},
+	{
+		name='delete_supply',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			despawnSupply(peer_id)
+		end,
+	},
+	{
+		name='clear_supply',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			clearSupplies()
+			announce('All supplies cleared.', -1)
+		end,
+	},
+	{
 		name='reset',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
@@ -192,6 +218,7 @@ g_commands={
 			g_vehicles={}
 			g_status_dirty=true
 			setPopup('status', false)
+			clearSupplies()
 			finishGame()
 			announce('Reset game.', -1)
 		end,
@@ -389,6 +416,7 @@ end
 function onDestroy()
 	server.removePopup(-1, g_ui_id)
 	clearPopups()
+	clearSupplies()
 end
 
 function onTick()
@@ -918,6 +946,7 @@ function startGame()
 		player.ready=false
 	end
 
+	clearSupplies()
 	setSettingsToBattle()
 end
 
@@ -1059,3 +1088,55 @@ g_converters={
 		if v=='false' then return false end
 	end,
 }
+
+function getAheadMatrix(peer_id, y, z)
+	local look_x, look_y, look_z=server.getPlayerLookDirection(peer_id)
+	local position=server.getPlayerPos(peer_id)
+	local offset=matrix.translation(0, y, -z)
+	local rotation=matrix.rotationToFaceXZ(-look_x, -look_z)
+	return matrix.multiply(position, matrix.multiply(rotation, offset))
+end
+
+function spawnAddonVehicle(name, transform_matrix)
+	local addon_index, is_success = server.getAddonIndex()
+	if not is_success then return end
+
+	local search_tag='name='..name
+	local addon_data=server.getAddonData(addon_index)
+	for location_index=0,addon_data.location_count-1 do
+		local location_data=server.getLocationData(addon_index, location_index)
+		for component_index=0,location_data.component_count-1 do
+			local component_data= server.getLocationComponentData(addon_index, location_index, component_index)
+			if component_data.type=='vehicle' then
+				for _,tag_pair in pairs(component_data.tags) do
+					if tag_pair==search_tag then
+						return server.spawnAddonVehicle(transform_matrix, addon_index, component_data.id)
+					end
+				end
+			end
+		end
+	end
+end
+
+function spawnSupply(peer_id)
+	despawnSupply(peer_id)
+	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
+	if vehicle_id then
+		g_supply_vehicles[peer_id]=vehicle_id
+	end
+end
+
+function despawnSupply(peer_id)
+	local vehicle_id=g_supply_vehicles[peer_id]
+	if vehicle_id then
+		server.despawnVehicle(vehicle_id, true)
+		g_supply_vehicles[peer_id]=nil
+	end
+end
+
+function clearSupplies()
+	for peer_id,vehicle_id in pairs(g_supply_vehicles) do
+		server.despawnVehicle(vehicle_id, true)
+	end
+	g_supply_vehicles={}
+end

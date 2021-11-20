@@ -31,6 +31,10 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   試合開始前カウントダウンを再開
 - `?pause`
   試合開始前カウントダウンを中断
+- `?call_supply`
+  準備用の装備品類を出す
+- `?delete_supply`
+  準備用の装備品類を消す
 
 管理者はjoin/leave/ready/waitコマンドの末尾にpeer_idをつけることで他人をチームに入れたり抜いたりできます。
 
@@ -43,6 +47,8 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 
 - `?mm reset`
   状態をすべてリセット
+- `?clear_supply`
+  準備用の装備品類を全て消す
 - `?mm set_hp [基礎HP]`
   車両の基礎HPを設定
 - `?mm set_battery [バッテリー名]`
@@ -80,3 +86,7 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 | Heavy Auto Cannon  |     | HA_K    | HA_HE          | HA_F          | HA_AP          | HA_I       |
 | Battle Cannon      |     | BS_K    | BS_HE          | BS_F          | BS_AP          | BS_I       |
 | Artillery Cannon   |     |         | AS_HE          | AS_F          | AS_AP          |            |
+
+## 準備用車両
+`?mm call_supply` で準備用の装備品類を呼び出せます。
+一人一つまでで、試合開始と同時に削除されます。
