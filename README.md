@@ -15,6 +15,9 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 
 - `?mm`
   コマンド一覧と現在設定を表示
+- `?mm reset_ui`
+  UI IDを更新する
+  joinしても左の状態表示Popupが出ないときに実行してください
 - `?mm join (チーム名)`
   チームを作成・参加
 - `?mm leave`
@@ -31,6 +34,10 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   試合開始前カウントダウンを再開
 - `?pause`
   試合開始前カウントダウンを中断
+- `?supply`
+  準備用の装備品類を設置
+- `?delete_supply`
+  準備用の装備品類を削除
 
 管理者はjoin/leave/ready/waitコマンドの末尾にpeer_idをつけることで他人をチームに入れたり抜いたりできます。
 
@@ -43,6 +50,14 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 
 - `?mm reset`
   状態をすべてリセット
+- `?clear_supply`
+  全ての準備用の装備品類を削除
+- `?flag [名前]`
+  旗を設置
+- `?delete_flag [名前]`
+  旗を削除
+- `?clear_flag`
+  すべての旗を削除
 - `?mm set_hp [基礎HP]`
   車両の基礎HPを設定
 - `?mm set_battery [バッテリー名]`
@@ -59,6 +74,12 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   残り時間のリマインド間隔を設定
 - `?mm set_tps [true|false]`
   試合中に三人称視点を許可するかを設定
+- `?mm set_ext_volume [容量(%)]`
+  消化器の初期容量設定
+- `?mm set_torch_volume [容量(%)]`
+  修理トーチの初期容量設定
+- `?mm set_welder_volume [容量(%)]`
+  水中トーチの初期容量設定
 
 
 ## 車両について
@@ -80,3 +101,7 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 | Heavy Auto Cannon  |     | HA_K    | HA_HE          | HA_F          | HA_AP          | HA_I       |
 | Battle Cannon      |     | BS_K    | BS_HE          | BS_F          | BS_AP          | BS_I       |
 | Artillery Cannon   |     |         | AS_HE          | AS_F          | AS_AP          |            |
+
+## 準備用車両
+`?mm call_supply` で準備用の装備品類を呼び出せます。
+一人一つまでで、試合開始と同時に削除されます。

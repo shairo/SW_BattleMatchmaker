@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.4.0
+-- Version 1.5.0
 
 g_players={}
 g_ui_id=0
@@ -14,7 +14,7 @@ g_in_countdown=false
 g_timer=0
 g_remind_interval=3600
 
-g_supply_buttons={
+g_ammo_supply_buttons={
 	MG_K={42,50},
 	MG_AP={45,50},
 	MG_I={46,50},
@@ -48,6 +48,17 @@ g_supply_buttons={
 	AS_AP={70,1},
 }
 
+g_item_supply_buttons={
+	['Take Extinguisher']={1,10,0,9},
+	['Take Torch']       ={1,27,0,400},
+	['Take Welder']      ={1,26,0,250},
+	['Take FlashLight']  ={2,15,0,100},
+	['Take Binoculars']  ={2,6, 0,0},
+	['Take NightVision'] ={2,17,0,100},
+	['Take Compass']     ={2,8 ,0,0},
+	['Take FirstAidKit'] ={2,11,4,0},
+}
+
 g_default_savedata={
 	base_hp=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	battery_name='killed',
@@ -57,6 +68,11 @@ g_default_savedata={
 	game_time_min=property.slider('Default Game time (min)', 1, 60, 1, 20),
 	remind_time_min=property.slider('Default Remind time (min)', 1, 10, 1, 1),
 	tps_enable=property.checkbox('Default Third Person Enabled', false),
+	extinguisher_volume=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
+	torch_volume=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
+	welder_volume=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
+	supply_vehicles={},
+	flag_vehicles={},
 }
 
 -- Commands --
@@ -160,12 +176,7 @@ g_commands={
 				return
 			end
 
-			local x, y, z=server.getPlayerLookDirection(peer_id)
-			local position=server.getPlayerPos(peer_id)
-			local offset=matrix.translation(0,1,8)
-			local rotation=matrix.rotationToFaceXZ(x, z)
-			local m=matrix.multiply(position, matrix.multiply(rotation, offset))
-			server.setVehiclePos(player.vehicle_id,m)
+			server.setVehiclePos(player.vehicle_id, getAheadMatrix(peer_id, 2, 8))
 			local name=server.getPlayerName(peer_id)
 			announce('Vehicle orderd by '..name..'.', -1)
 		end,
@@ -185,6 +196,64 @@ g_commands={
 		end,
 	},
 	{
+		name='supply',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			if g_in_game then
+				announce('Cannot call supply after game start.', peer_id)
+				return
+			end
+			spawnSupply(peer_id)
+
+			local name=server.getPlayerName(peer_id)
+			announce(name..' called supply object.', -1)
+		end,
+	},
+	{
+		name='delete_supply',
+		auth=true,
+		action=function(peer_id, is_admin, is_auth)
+			despawnSupply(peer_id)
+		end,
+	},
+	{
+		name='clear_supply',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			clearSupplies()
+			clearFlags()
+			announce('All supplies cleared.', -1)
+		end,
+	},
+	{
+		name='flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, name)
+			spawnFlag(peer_id, name)
+		end,
+		args={
+			{name='name', type='string', require=true},
+		},
+	},
+	{
+		name='delete_flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, name)
+			despawnFlag(peer_id, name)
+		end,
+		args={
+			{name='name', type='string', require=true},
+		},
+	},
+	{
+		name='clear_flag',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			clearFlags()
+			announce('All flags cleared.', -1)
+		end,
+	},
+	{
 		name='reset',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
@@ -192,6 +261,8 @@ g_commands={
 			g_vehicles={}
 			g_status_dirty=true
 			setPopup('status', false)
+			clearSupplies()
+			clearFlags()
 			finishGame()
 			announce('Reset game.', -1)
 		end,
@@ -317,6 +388,42 @@ g_commands={
 			{name='true|false', type='boolean', require=true},
 		},
 	},
+	{
+		name='set_ext_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.extinguisher_volume=volume
+			announce('Set extinguisher volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
+	{
+		name='set_torch_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.torch_volume=volume
+			announce('Set torch volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
+	{
+		name='set_welder_volume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, volume)
+			volume=clamp(volume,1,100)
+			g_savedata.welder_volume=volume
+			announce('Set welder volume to '..tostring(volume)..'%.', -1)
+		end,
+		args={
+			{name='volume(%)', type='number', require=true},
+		},
+	},
 }
 
 function findCommand(command)
@@ -389,6 +496,8 @@ end
 function onDestroy()
 	server.removePopup(-1, g_ui_id)
 	clearPopups()
+	clearSupplies()
+	clearFlags()
 end
 
 function onTick()
@@ -450,14 +559,57 @@ end
 
 function onButtonPress(vehicle_id, peer_id, button_name)
 	if not peer_id or peer_id<0 then return end
+	local character_id, is_success=server.getPlayerCharacterID(peer_id)
+	if not is_success then return end
+
+	if isSupply(vehicle_id) then
+		if not server.getVehicleButton(vehicle_id, button_name).on then return end
+		local item_supply=g_item_supply_buttons[button_name]
+		if item_supply then
+			local slot,equipment_id,v1,v2=table.unpack(item_supply)
+			slot=findEmptySlot(character_id, slot)
+			if not slot then
+				announce('Inventory is full.', peer_id)
+				return
+			end
+			if equipment_id==10 then
+				v2=v2*g_savedata.extinguisher_volume*0.01
+			elseif equipment_id==27 then
+				v2=v2*g_savedata.torch_volume*0.01
+			elseif equipment_id==26 then
+				v2=v2*g_savedata.welder_volume*0.01
+			end
+			server.setCharacterItem(character_id, slot, equipment_id, false, v1, v2)
+		elseif button_name=='Join RED' then
+			join(peer_id, 'RED')
+		elseif button_name=='Join BLUE' then
+			join(peer_id, 'BLUE')
+		elseif button_name=='Join PINK' then
+			join(peer_id, 'PINK')
+		elseif button_name=='Join YLW' then
+			join(peer_id, 'YLW')
+		elseif button_name=='Leave' then
+			leave(peer_id)
+		elseif button_name=='Clear Large Equipment' then
+			server.setCharacterItem(character_id, 1, 0, false)
+		elseif button_name=='Clear Small Equipments' then
+			server.setCharacterItem(character_id, 2, 0, false)
+			server.setCharacterItem(character_id, 3, 0, false)
+			server.setCharacterItem(character_id, 4, 0, false)
+			server.setCharacterItem(character_id, 5, 0, false)
+		elseif button_name=='Clear Outfit' then
+			server.setCharacterItem(character_id, 6, 0, false)
+		end
+		return
+	end
+
 	if g_savedata.supply_ammo_amount<=0 then return end
 
-	local equipment_data=g_supply_buttons[button_name]
+	local equipment_data=g_ammo_supply_buttons[button_name]
 	if not equipment_data then return end
 	local equipment_id=equipment_data[1]
 	local equipment_amount=equipment_data[2]
 
-	local character_id=server.getPlayerCharacterID(peer_id)
 	local current_equipment_id=server.getCharacterItem(character_id, 1)
 	if current_equipment_id>0 then
 		if current_equipment_id~=equipment_id then
@@ -546,7 +698,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 			'  - countdown time: '..tostring(g_savedata.cd_time_sec)..'sec\n'..
 			'  - game time: '..tostring(g_savedata.game_time_min)..'min\n'..
 			'  - remind time: '..tostring(g_savedata.remind_time_min)..'min\n'..
-			'  - third person enabled: '..tostring(g_savedata.tps_enable),
+			'  - third person enabled: '..tostring(g_savedata.tps_enable)..'\n'..
+			'  - extinguisher volume: '..tostring(g_savedata.extinguisher_volume)..'%\n'..
+			'  - torch volume: '..tostring(g_savedata.torch_volume)..'%\n'..
+			'  - welder volume: '..tostring(g_savedata.welder_volume)..'%',
 			peer_id)
 		return
 	end
@@ -918,6 +1073,7 @@ function startGame()
 		player.ready=false
 	end
 
+	clearSupplies()
 	setSettingsToBattle()
 end
 
@@ -1015,6 +1171,75 @@ function clearPopups()
 	g_popups={}
 end
 
+-- Support vehicle
+
+function spawnSupply(peer_id)
+	despawnSupply(peer_id)
+	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
+	if vehicle_id then
+		g_savedata.supply_vehicles[peer_id]=vehicle_id
+	end
+end
+
+function despawnSupply(peer_id)
+	local vehicle_id=g_savedata.supply_vehicles[peer_id]
+	if vehicle_id then
+		server.despawnVehicle(vehicle_id, true)
+		g_savedata.supply_vehicles[peer_id]=nil
+	end
+end
+
+function clearSupplies()
+	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
+		server.despawnVehicle(vehicle_id, true)
+	end
+	g_savedata.supply_vehicles={}
+end
+
+function isSupply(check_vehicle_id)
+	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
+		if vehicle_id==check_vehicle_id then
+			return true
+		end
+	end
+	return false
+end
+
+function spawnFlag(peer_id, name)
+	despawnFlag(peer_id, name)
+	local vehicle_matrix=getAheadMatrix(peer_id, 9, 8)
+	local vehicle_id=spawnAddonVehicle('flag', vehicle_matrix)
+
+	if vehicle_id then
+		server.setVehicleTooltip(vehicle_id, name)
+		local ui_id=server.getMapID()
+		local x,y,z=matrix.position(vehicle_matrix)
+		local r,g,b,a=getColor(name)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 10, name, r, g, b, a)
+		g_savedata.flag_vehicles[name]={
+			vehicle_id=vehicle_id,
+			ui_id=ui_id,
+		}
+	end
+end
+
+function despawnFlag(peer_id, name)
+	local flag=g_savedata.flag_vehicles[name]
+	if flag then
+		server.despawnVehicle(flag.vehicle_id, true)
+		server.removeMapID(-1, flag.ui_id)
+		g_savedata.flag_vehicles[name]=nil
+	end
+end
+
+function clearFlags()
+	for name,flag in pairs(g_savedata.flag_vehicles) do
+		server.despawnVehicle(flag.vehicle_id, true)
+		server.removeMapID(-1, flag.ui_id)
+	end
+	g_savedata.flag_vehicles={}
+end
+
 -- Utility Functions --
 
 function announce(text, peer_id)
@@ -1058,4 +1283,63 @@ g_converters={
 		if v=='true' then return true end
 		if v=='false' then return false end
 	end,
+}
+
+function getAheadMatrix(peer_id, y, z)
+	local look_x, look_y, look_z=server.getPlayerLookDirection(peer_id)
+	local position=server.getPlayerPos(peer_id)
+	local offset=matrix.translation(0, y, -z)
+	local rotation=matrix.rotationToFaceXZ(-look_x, -look_z)
+	return matrix.multiply(position, matrix.multiply(rotation, offset))
+end
+
+function spawnAddonVehicle(name, transform_matrix)
+	local addon_index, is_success = server.getAddonIndex()
+	if not is_success then return end
+
+	local search_tag='name='..name
+	local addon_data=server.getAddonData(addon_index)
+	for location_index=0,addon_data.location_count-1 do
+		local location_data=server.getLocationData(addon_index, location_index)
+		for component_index=0,location_data.component_count-1 do
+			local component_data= server.getLocationComponentData(addon_index, location_index, component_index)
+			if component_data.type=='vehicle' then
+				for _,tag_pair in pairs(component_data.tags) do
+					if tag_pair==search_tag then
+						return server.spawnAddonVehicle(transform_matrix, addon_index, component_data.id)
+					end
+				end
+			end
+		end
+	end
+end
+
+function findEmptySlot(object_id, slot)
+	local equipment_id=server.getCharacterItem(object_id, slot)
+	if equipment_id==0 then
+		return slot
+	end
+	if slot>=2 and slot<5 then
+		return findEmptySlot(object_id, slot+1)
+	end
+end
+
+function getColor(name)
+	name=string.lower(name)
+	local color=g_colors[name]
+	if color then
+		return table.unpack(color)
+	end
+	return 255,127,39,255
+end
+
+g_colors={
+	red   ={255,0  ,0,  255},
+	green ={0,  255,0,  255},
+	blue  ={0,  0,  255,255},
+	yellow={255,255,0,  255},
+	ylw   ={255,255,0,  255},
+	pink  ={255,0,  255,255},
+	white ={255,255,255,255},
+	black ={0,  0,  0,  255},
 }
