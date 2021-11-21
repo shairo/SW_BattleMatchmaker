@@ -177,8 +177,7 @@ g_commands={
 			end
 
 			server.setVehiclePos(player.vehicle_id, getAheadMatrix(peer_id, 2, 8))
-			local name=server.getPlayerName(peer_id)
-			announce('Vehicle orderd by '..name..'.', -1)
+			announce('Vehicle orderd.', peer_id)
 		end,
 	},
 	{
@@ -204,9 +203,7 @@ g_commands={
 				return
 			end
 			spawnSupply(peer_id)
-
-			local name=server.getPlayerName(peer_id)
-			announce(name..' called supply object.', -1)
+			announce('supply object deployed.', peer_id)
 		end,
 	},
 	{
