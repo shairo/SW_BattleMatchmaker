@@ -551,6 +551,7 @@ end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
 	leave(peer_id)
+	despawnSupply(peer_id)
 end
 
 function onPlayerDie(steam_id, name, peer_id, is_admin, is_auth)
