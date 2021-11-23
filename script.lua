@@ -2,7 +2,6 @@
 -- Version 1.5.0
 
 g_players={}
-g_ui_id=0
 g_popups={}
 g_status_text=nil
 g_vehicles={}
@@ -484,14 +483,16 @@ function onCreate(is_world_create)
 		end
 	end
 
+	clearSupplies()
+	clearFlags()
+
 	registerPopup('status', -0.9, 0.2)
-	registerPopup('countdown', 0, 0.7)
+	registerPopup('countdown', 0, 0.8)
 
 	setSettingsToStandby()
 end
 
 function onDestroy()
-	server.removePopup(-1, g_ui_id)
 	clearPopups()
 	clearSupplies()
 	clearFlags()
@@ -1161,6 +1162,27 @@ function renewPopupIds()
 		popup.ui_id=server.getMapID()
 		popup.is_dirty=true
 	end
+
+	for peer_id,supply in pairs(g_savedata.supply_vehicles) do
+		local vehicle_matrix, is_success = server.getVehiclePos(supply.vehicle_id)
+		if is_success then
+			server.removeMapID(-1, supply.ui_id)
+			supply.ui_id=server.getMapID()
+			local x,y,z = matrix.position(vehicle_matrix)
+			server.addMapLabel(-1, supply.ui_id, 1, 'supply', x, z)
+		end
+	end
+
+	for name,flag in pairs(g_savedata.flag_vehicles) do
+		local vehicle_matrix, is_success = server.getVehiclePos(flag.vehicle_id)
+		if is_success then
+			server.removeMapID(-1, flag.ui_id)
+			flag.ui_id=server.getMapID()
+			local x,y,z = matrix.position(vehicle_matrix)
+			local r,g,b,a=getColor(name)
+			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 10, name, r, g, b, a)
+		end
+	end
 end
 function clearPopups()
 	for i,popup in ipairs(g_popups) do
@@ -1173,30 +1195,44 @@ end
 
 function spawnSupply(peer_id)
 	despawnSupply(peer_id)
-	local vehicle_id=spawnAddonVehicle('supply', getAheadMatrix(peer_id, 1, 8))
+	local vehicle_matrix=getAheadMatrix(peer_id, 1, 8)
+	local vehicle_id=spawnAddonVehicle('supply', vehicle_matrix)
 	if vehicle_id then
-		g_savedata.supply_vehicles[peer_id]=vehicle_id
+		local ui_id=server.getMapID()
+		local x,y,z=matrix.position(vehicle_matrix)
+		server.addMapLabel(-1, ui_id, 1, 'supply', x, z)
+		g_savedata.supply_vehicles[peer_id]={
+			vehicle_id=vehicle_id,
+			ui_id=ui_id,
+		}
 	end
 end
 
 function despawnSupply(peer_id)
-	local vehicle_id=g_savedata.supply_vehicles[peer_id]
-	if vehicle_id then
-		server.despawnVehicle(vehicle_id, true)
+	local supply=g_savedata.supply_vehicles[peer_id]
+	if supply then
+		server.despawnVehicle(supply.vehicle_id, true)
+		server.removeMapID(-1, supply.ui_id)
 		g_savedata.supply_vehicles[peer_id]=nil
 	end
 end
 
 function clearSupplies()
-	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
-		server.despawnVehicle(vehicle_id, true)
+	for peer_id,supply in pairs(g_savedata.supply_vehicles) do
+		if type(supply)=='table' then
+			server.despawnVehicle(supply.vehicle_id, true)
+			server.removeMapID(-1, supply.ui_id)
+		else
+			-- for backward compertibility
+			server.despawnVehicle(supply, true)
+		end
 	end
 	g_savedata.supply_vehicles={}
 end
 
-function isSupply(check_vehicle_id)
-	for peer_id,vehicle_id in pairs(g_savedata.supply_vehicles) do
-		if vehicle_id==check_vehicle_id then
+function isSupply(vehicle_id)
+	for peer_id,supply in pairs(g_savedata.supply_vehicles) do
+		if supply.vehicle_id==vehicle_id then
 			return true
 		end
 	end
