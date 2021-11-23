@@ -47,6 +47,15 @@ g_ammo_supply_buttons={
 	AS_AP={70,1},
 }
 
+g_classes=
+{
+	ultra_light={hp=300},
+	light      ={hp=1000},
+	medium     ={hp=1500},
+	heavy      ={hp=2000},
+	ultra_heavy={hp=2500},
+}
+
 g_item_supply_buttons={
 	['Take Extinguisher']={1,10,0,9},
 	['Take Torch']       ={1,27,0,400},
@@ -840,6 +849,14 @@ function registerVehicle(vehicle_id)
 	}
 
 	local base_hp=g_savedata.base_hp
+	for class_name,class in pairs(g_classes) do
+		local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
+		if is_success then
+			base_hp=class.hp
+			break
+		end
+	end
+
 	if base_hp and base_hp>0 then
 		vehicle.hp=math.max(base_hp//1|0,1)
 	end
