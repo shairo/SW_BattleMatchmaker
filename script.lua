@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.5.0
+-- Version 1.5.1
 
 g_players={}
 g_popups={}
