@@ -617,7 +617,6 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		return
 	end
 
-	announce(tostring(vehicle_id), peer_id)
 	local vehicle=findVehicle(vehicle_id)
 	if vehicle and vehicle.remain_ammo<=0 then
 		announce('Out of ammo.', peer_id)
