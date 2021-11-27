@@ -91,12 +91,12 @@ g_commands={
 		name='join',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
-			if g_in_game then
+			if g_in_game and not is_admin then
 				announce('Cannot join after game start..', peer_id)
 				return
 			end
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
-			join(target_peer_id or peer_id, team_name)
+			join(target_peer_id or peer_id, team_name, is_admin)
 		end,
 		args={
 			{name='team_name', type='string', require=true},
@@ -207,7 +207,7 @@ g_commands={
 		name='supply',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			if g_in_game then
+			if g_in_game and not is_admin then
 				announce('Cannot call supply after game start.', peer_id)
 				return
 			end
@@ -792,14 +792,15 @@ end
 
 -- Player Functions --
 
-function join(peer_id, team)
+function join(peer_id, team, force)
+	if g_in_game and not force then return end
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
 	local player={
 		name=name,
 		team=team,
 		alive=true,
-		ready=false,
+		ready=g_in_game,
 		vehicle_id=-1,
 	}
 	g_players[peer_id]=player
