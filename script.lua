@@ -10,6 +10,7 @@ g_status_dirty=false
 g_finish_dirty=false
 g_in_game=false
 g_in_countdown=false
+g_pause=false
 g_timer=0
 g_remind_interval=3600
 
@@ -257,6 +258,49 @@ g_commands={
 			clearFlags()
 			announce('All flags cleared.', -1)
 		end,
+	},
+	{
+		name='pause',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			if not g_in_game then
+				announce('Cannot pause before game start.', peer_id)
+				return
+			end
+			if g_pause then return end
+			g_pause=true
+			notify('Timer Operation', 'Game is paused.', 1, -1)
+		end,
+	},
+	{
+		name='resume',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			if not g_pause then
+				announce('Cannot resume when not in pause.', peer_id)
+				return
+			end
+			g_pause=false
+			notify('Timer Operation', 'Game is resumed.', 1, -1)
+		end,
+	},
+	{
+		name='add_time',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, minute)
+			if not g_in_game then
+				announce('Cannot add time before game start.', peer_id)
+				return
+			end
+			g_timer=g_timer+(minute*60*60//1|0)
+			if g_timer>0 then
+				local timerMin=g_timer//3600
+				notify('Timer Updated', 'The remaining time has been changed to '..tostring(timerMin)..' minutes', 1, -1)
+			end
+		end,
+		args={
+			{name='minute', type='number', require=true},
+		},
 	},
 	{
 		name='reset',
@@ -524,14 +568,15 @@ function onTick()
 		end
 	end
 	if g_in_game then
-		if g_timer>0 then
+		if g_pause then
+		elseif g_timer>0 then
 			local sec=g_timer//60
 			g_timer=g_timer-1
 			local time_text=string.format('%02.f:%02.f', sec//60,sec%60)
 			setPopup('countdown', true, time_text)
 
 			if g_timer>0 and g_timer%g_remind_interval==0 then
-				server.notify(-1, 'Time reminder', time_text..' left.', 1)
+				server.notify(-1, 'Time Reminder', time_text..' left.', 1)
 			end
 		else
 			finishGame()
@@ -1080,6 +1125,7 @@ end
 function startGame()
 	g_in_game=true
 	g_in_countdown=false
+	g_pause=false
 	g_status_dirty=true
 	g_timer=g_savedata.game_time_min*60*60//1|0
 	g_remind_interval=g_savedata.remind_time_min*60*60//1|0
@@ -1095,6 +1141,7 @@ end
 function finishGame()
 	g_in_game=false
 	g_in_countdown=false
+	g_pause=false
 	g_status_dirty=true
 	setPopup('countdown', false)
 
