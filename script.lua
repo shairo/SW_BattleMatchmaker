@@ -189,17 +189,17 @@ g_commands={
 		end,
 	},
 	{
-		name='pause',
+		name='start',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			pause()
+			startCountdown(true, peer_id)
 		end,
 	},
 	{
-		name='resume',
+		name='stop',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			resume(true, peer_id)
+			stopCountdown()
 		end,
 	},
 	{
@@ -772,7 +772,7 @@ function join(peer_id, team)
 
 	announce('You joined to '..team..'.', peer_id)
 
-	pause()
+	stopCountdown()
 end
 
 function leave(peer_id)
@@ -787,9 +787,9 @@ function leave(peer_id)
 		g_finish_dirty=true
 	else
 		if player.ready then
-			pause()
+			stopCountdown()
 		else
-			resume()
+			startCountdown()
 		end
 	end
 end
@@ -813,7 +813,7 @@ function ready(peer_id)
 		return
 	end
 	player.ready=true
-	resume()
+	startCountdown()
 	g_status_dirty=true
 end
 
@@ -822,7 +822,7 @@ function wait(peer_id)
 	local player=g_players[peer_id]
 	if not player or not player.ready then return end
 	player.ready=false
-	pause()
+	stopCountdown()
 	g_status_dirty=true
 end
 
@@ -1008,7 +1008,7 @@ function playerToString(name, alive, ready, hp, bat)
 	return name..'\nStat:'..stat_text..hp_text..battery_text
 end
 
-function resume(force, peer_id)
+function startCountdown(force, peer_id)
 	if g_in_game or g_in_countdown then return end
 	local ready=true
 	local teams={}
@@ -1036,7 +1036,7 @@ function resume(force, peer_id)
 	g_status_dirty=true
 end
 
-function pause()
+function stopCountdown()
 	if g_in_game or not g_in_countdown then return end
 	announce('Countdown stop.', -1)
 	setPopup('countdown', false)
