@@ -891,6 +891,7 @@ function registerVehicle(vehicle_id)
 		vehicle_id=vehicle_id,
 		alive=true,
 		remain_ammo=g_savedata.supply_ammo_amount//1|0,
+		gc_time=600,
 	}
 
 	local base_hp=g_savedata.base_hp
@@ -964,7 +965,14 @@ function reregisterVehicles()
 end
 
 function updateVehicle(vehicle)
-	if not vehicle.alive then return end
+	if not vehicle.alive then
+		if vehicle.gc_time>0 then
+			vehicle.gc_time=vehicle.gc_time-1
+		else
+			server.despawnVehicle(vehicle.vehicle_id, true)
+		end
+		return
+	end
 
 	local vehicle_id=vehicle.vehicle_id
 
