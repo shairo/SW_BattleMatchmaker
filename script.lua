@@ -67,20 +67,92 @@ g_item_supply_buttons={
 	['Take FirstAidKit']	={2,11,4,  0},
 }
 
+g_settings={
+	{
+		name='Base HP',
+		key='vehicle_hp',
+		type='integer',
+		min=0,
+	},
+	{
+		name='Kill Battery Name',
+		key='battery_name',
+		type='string',
+	},
+	{
+		name='Supply Ammo Ammount',
+		key='supply_ammo',
+		type='integer',
+		min=0,
+	},
+	{
+		name='Order Command Enabled',
+		key='order_enabled',
+		type='boolean',
+	},
+	{
+		name='Countdown Time(sec)',
+		key='cd_sec',
+		type='integer',
+		min=1,
+	},
+	{
+		name='Game Time(min)',
+		key='game_time',
+		type='number',
+		min=1,
+	},
+	{
+		name='Remind interval Time(min)',
+		key='remind_time',
+		type='number',
+		min=1,
+	},
+	{
+		name='TPS Enabled',
+		key='tps_enabled',
+		type='boolean',
+	},
+	{
+		name='Fire extinguisher Volume',
+		key='ext_volume',
+		type='number',
+		min=1, max=100,
+	},
+	{
+		name='Welding torch Volume',
+		key='torch_volume',
+		type='number',
+		min=1, max=100,
+	},
+	{
+		name='Under water welder Volume',
+		key='welder_volume',
+		type='number',
+		min=1, max=100,
+	},
+	{
+		name='Auto vehicle cleanup',
+		key='gc_vehicle',
+		type='boolean',
+	},
+}
+
 g_default_savedata={
-	base_hp				=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
-	battery_name		='killed',
-	supply_ammo_amount	=property.slider('Default Ammo Supply', 0, 100, 1, 40),
-	order_command		=property.checkbox('Default Order Command Enabled', true),
-	cd_time_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
-	game_time_min		=property.slider('Default Game time (min)', 1, 60, 1, 20),
-	remind_time_min		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
-	tps_enable			=property.checkbox('Default Third Person Enabled', false),
-	extinguisher_volume	=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
-	torch_volume		=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
-	welder_volume		=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
-	supply_vehicles={},
-	flag_vehicles={},
+	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
+	battery_name	='killed',
+	supply_ammo		=property.slider('Default Ammo Supply', 0, 100, 1, 40),
+	order_enabled	=property.checkbox('Default Order Command Enabled', true),
+	cd_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
+	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
+	remind_time		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
+	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
+	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
+	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
+	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
+	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
+	supply_vehicles	={},
+	flag_vehicles	={},
 }
 
 -- Commands --
@@ -166,7 +238,7 @@ g_commands={
 				announce('Cannot order after game start.', peer_id)
 				return
 			end
-			if not g_savedata.order_command then
+			if not g_savedata.order_enabled then
 				announce('Order command is not available.', peer_id)
 				return
 			end
@@ -324,152 +396,30 @@ g_commands={
 		end,
 	},
 	{
-		name='set_hp',
+		name='set',
 		admin=true,
-		action=function(peer_id, is_admin, is_auth, hp)
-			g_savedata.base_hp=hp
-			reregisterVehicles()
-			announce('Set base vehicle hp to '..tostring(g_savedata.base_hp), -1)
-		end,
-		args={
-			{name='hp', type='integer', require=true},
-		},
-	},
-	{
-		name='set_battery',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, battery_name)
-			g_savedata.battery_name=battery_name
-			reregisterVehicles()
-			announce('Set lifeline battery name to '..tostring(g_savedata.battery_name), -1)
-		end,
-		args={
-			{name='battery_name', type='string', require=true},
-		},
-	},
-	{
-		name='set_ammo',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, supply_ammo_amount)
-			g_savedata.supply_ammo_amount=supply_ammo_amount
-			reregisterVehicles()
-			announce('Set supply ammo count to '..tostring(g_savedata.supply_ammo_amount), -1)
-		end,
-		args={
-			{name='supply_ammo_amount', type='integer', require=true},
-		},
-	},
-	{
-		name='set_order',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, enabled)
-			if enabled then
-				announce('order command enabled.', -1)
-				g_savedata.order_command=true
-			else
-				announce('order command disabled.', -1)
-				g_savedata.order_command=false
-			end
-		end,
-		args={
-			{name='true|false', type='boolean', require=true},
-		},
-	},
-	{
-		name='set_cd_time',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, cd_time_sec)
-			if cd_time_sec<1 then
-				announce('Cannot set time under 1.', peer_id)
+		action=function(peer_id, is_admin, is_auth, key, value)
+			if not key then
+				showSettingsHelp(peer_id)
 				return
 			end
-			g_savedata.cd_time_sec=cd_time_sec
-			announce('Set countdown time to '..tostring(cd_time_sec)..' sec.', -1)
-		end,
-		args={
-			{name='second', type='number', require=true},
-		},
-	},
-	{
-		name='set_game_time',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, game_time_min)
-			if game_time_min<1 then
-				announce('Cannot set time under 1.', peer_id)
+			local setting_define=findSetting(key)
+			if not setting_define then
+				announce('Setting "'..key..'" not found.', peer_id)
 				return
 			end
-			g_savedata.game_time_min=game_time_min
-			announce('Set game time to '..tostring(game_time_min)..' min.', -1)
-		end,
-		args={
-			{name='minute', type='number', require=true},
-		},
-	},
-	{
-		name='set_remind_time',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, remind_time_min)
-			if remind_time_min<1 then
-				announce('Cannot set time under 1.', peer_id)
+			if not value then
+				announce('Argument not enough. Except ['..setting_define.type..'].', peer_id)
 				return
 			end
-			g_savedata.remind_time_min=remind_time_min
-			announce('Set remind time to '..tostring(remind_time_min)..' min.', -1)
+			local value, is_success=validateArg(setting_define, value, peer_id)
+			if not is_success then return end
+			g_savedata[setting_define.key]=value
+			announce(setting_define.name..' set to '..tostring(value), -1)
 		end,
 		args={
-			{name='minute', type='number', require=true},
-		},
-	},
-	{
-		name='set_tps',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, enabled)
-			if enabled then
-				announce('Third person enabled.', -1)
-				g_savedata.tps_enable=true
-			else
-				announce('Third person disabled.', -1)
-				g_savedata.tps_enable=false
-			end
-		end,
-		args={
-			{name='true|false', type='boolean', require=true},
-		},
-	},
-	{
-		name='set_ext_volume',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, volume)
-			volume=clamp(volume,1,100)
-			g_savedata.extinguisher_volume=volume
-			announce('Set extinguisher volume to '..tostring(volume)..'%.', -1)
-		end,
-		args={
-			{name='volume(%)', type='number', require=true},
-		},
-	},
-	{
-		name='set_torch_volume',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, volume)
-			volume=clamp(volume,1,100)
-			g_savedata.torch_volume=volume
-			announce('Set torch volume to '..tostring(volume)..'%.', -1)
-		end,
-		args={
-			{name='volume(%)', type='number', require=true},
-		},
-	},
-	{
-		name='set_welder_volume',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth, volume)
-			volume=clamp(volume,1,100)
-			g_savedata.welder_volume=volume
-			announce('Set welder volume to '..tostring(volume)..'%.', -1)
-		end,
-		args={
-			{name='volume(%)', type='number', require=true},
+			{name='key', type='string', require=false},
+			{name='value', type='string', require=false},
 		},
 	},
 }
@@ -481,6 +431,15 @@ function findCommand(command)
 		end
 	end
 end
+
+function findSetting(key)
+	for i,setting_define in ipairs(g_settings) do
+		if setting_define.key==key then
+			return setting_define
+		end
+	end
+end
+
 
 function showHelp(peer_id, is_admin, is_auth)
 	local commands_help='Commands:\n'
@@ -506,6 +465,23 @@ function showHelp(peer_id, is_admin, is_auth)
 	else
 		announce('Permitted command is not found.', peer_id)
 	end
+end
+
+function showSettings(peer_id)
+	local settings_help='Settings:\n'
+	for i,setting_define in ipairs(g_settings) do
+		local value=g_savedata[setting_define.key]
+		settings_help=settings_help..'  - '..setting_define.name..': '..tostring(value)..'\n'
+	end
+	announce(settings_help, peer_id)
+end
+
+function showSettingsHelp(peer_id)
+	local settings_help='Setting commands:\n'
+	for i,setting_define in ipairs(g_settings) do
+		settings_help=settings_help..'  - ?mm set '..setting_define.key..': ['..setting_define.type..']\n'
+	end
+	announce(settings_help, peer_id)
 end
 
 function checkAuth(command, is_admin, is_auth)
@@ -633,7 +609,7 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 				return
 			end
 			if equipment_id==10 then
-				v2=v2*g_savedata.extinguisher_volume*0.01
+				v2=v2*g_savedata.ext_volume*0.01
 			elseif equipment_id==27 then
 				v2=v2*g_savedata.torch_volume*0.01
 			elseif equipment_id==26 then
@@ -663,7 +639,7 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		return
 	end
 
-	if g_savedata.supply_ammo_amount<=0 then return end
+	if g_savedata.supply_ammo<=0 then return end
 
 	local equipment_data=g_ammo_supply_buttons[button_name]
 	if not equipment_data then return end
@@ -748,20 +724,7 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 
 	if not one then
 		showHelp(peer_id, is_admin, is_auth)
-		announce(
-			'Current settings:\n'..
-			'  - base hp: '..tostring(g_savedata.base_hp)..'\n'..
-			'  - battery name: '..g_savedata.battery_name..'\n'..
-			'  - ammo amount: '..tostring(g_savedata.supply_ammo_amount)..'\n'..
-			'  - order command enabled: '..tostring(g_savedata.order_command)..'\n'..
-			'  - countdown time: '..tostring(g_savedata.cd_time_sec)..'sec\n'..
-			'  - game time: '..tostring(g_savedata.game_time_min)..'min\n'..
-			'  - remind time: '..tostring(g_savedata.remind_time_min)..'min\n'..
-			'  - third person enabled: '..tostring(g_savedata.tps_enable)..'\n'..
-			'  - extinguisher volume: '..tostring(g_savedata.extinguisher_volume)..'%\n'..
-			'  - torch volume: '..tostring(g_savedata.torch_volume)..'%\n'..
-			'  - welder volume: '..tostring(g_savedata.welder_volume)..'%',
-			peer_id)
+		showSettings(peer_id)
 		return
 	end
 
@@ -776,24 +739,9 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 	end
 
 	local args={two, three, four, five}
-	if command_define.args then
-		for i,arg_define in ipairs(command_define.args) do
-			if #args < i then
-				if arg_define.require then
-					announce('Argument not enough. Except ['..arg_define.name..'].', peer_id)
-					return
-				end
-				break
-			end
-			local value=convert(args[i], arg_define.type)
-			if value==nil then
-				announce('Except '..arg_define.type..' to ['..arg_define.name..'].', peer_id)
-				return
-			end
-			args[i]=value
-		end
+	if command_define.args and not validateArgs(command_define, args, peer_id) then
+		return
 	end
-
 	command_define.action(peer_id, is_admin, is_auth, table.unpack(args))
 end
 
@@ -899,21 +847,21 @@ function registerVehicle(vehicle_id)
 	vehicle={
 		vehicle_id=vehicle_id,
 		alive=true,
-		remain_ammo=g_savedata.supply_ammo_amount//1|0,
+		remain_ammo=g_savedata.supply_ammo//1|0,
 		gc_time=600,
 	}
 
-	local base_hp=g_savedata.base_hp
+	local vehicle_hp=g_savedata.vehicle_hp
 	for class_name,class in pairs(g_classes) do
 		local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
 		if is_success then
-			base_hp=class.hp
+			vehicle_hp=class.hp
 			break
 		end
 	end
 
-	if base_hp and base_hp>0 then
-		vehicle.hp=math.max(base_hp//1|0,1)
+	if vehicle_hp and vehicle_hp>0 then
+		vehicle.hp=math.max(vehicle_hp//1|0,1)
 	end
 
 	local battery_name=g_savedata.battery_name
@@ -952,9 +900,9 @@ function reregisterVehicles()
 		local vehicle=g_vehicles[i]
 		if vehicle.alive then
 			vehicle.hp=nil
-			local base_hp=g_savedata.base_hp
-			if base_hp and base_hp>0 then
-				vehicle.hp=math.max(base_hp//1|0,1)
+			local vehicle_hp=g_savedata.vehicle_hp
+			if vehicle_hp and vehicle_hp>0 then
+				vehicle.hp=math.max(vehicle_hp//1|0,1)
 			end
 
 			vehicle.battery_name=nil
@@ -966,7 +914,7 @@ function reregisterVehicles()
 				end
 			end
 
-			vehicle.remain_ammo=g_savedata.supply_ammo_amount//1|0
+			vehicle.remain_ammo=g_savedata.supply_ammo//1|0
 
 			g_status_dirty=true
 		end
@@ -977,7 +925,7 @@ function updateVehicle(vehicle)
 	if not vehicle.alive then
 		if vehicle.gc_time>0 then
 			vehicle.gc_time=vehicle.gc_time-1
-		else
+		elseif g_savedata.gc_vehicle then
 			server.despawnVehicle(vehicle.vehicle_id, true)
 		end
 		return
@@ -1093,7 +1041,7 @@ function startCountdown(force, peer_id)
 		return
 	end
 	announce('Countdown start.', -1)
-	g_timer=g_savedata.cd_time_sec*60//1|0
+	g_timer=g_savedata.cd_sec*60//1|0
 	g_in_countdown=true
 	g_status_dirty=true
 end
@@ -1144,8 +1092,8 @@ function startGame()
 	g_in_countdown=false
 	g_pause=false
 	g_status_dirty=true
-	g_timer=g_savedata.game_time_min*60*60//1|0
-	g_remind_interval=g_savedata.remind_time_min*60*60//1|0
+	g_timer=g_savedata.game_time*60*60//1|0
+	g_remind_interval=g_savedata.remind_time*60*60//1|0
 
 	for _,player in pairs(g_players) do
 		player.ready=false
@@ -1175,9 +1123,9 @@ function finishGame()
 end
 
 function setSettingsToBattle()
-	local tps_enable=g_savedata.tps_enable
-	server.setGameSetting('third_person', tps_enable)
-	server.setGameSetting('third_person_vehicle', tps_enable)
+	local tps_enabled=g_savedata.tps_enabled
+	server.setGameSetting('third_person', tps_enabled)
+	server.setGameSetting('third_person_vehicle', tps_enabled)
 	server.setGameSetting('vehicle_damage', true)
 	server.setGameSetting('player_damage', true)
 	server.setGameSetting('map_show_players', false)
@@ -1453,3 +1401,40 @@ g_colors={
 	white	={255,255,255,255},
 	black	={0,  0,  0,  255},
 }
+
+function validateArgs(command_define, args, peer_id)
+	if command_define.args then
+		for i,arg_define in ipairs(command_define.args) do
+			if #args < i then
+				if arg_define.require then
+					announce('Argument not enough. Except ['..arg_define.name..'].', peer_id)
+					return false
+				end
+				break
+			end
+			local value, is_success=validateArg(arg_define, args[i])
+			if not is_success then return false end
+			args[i]=value
+		end
+	end
+	return true
+end
+
+function validateArg(arg_define, arg, peer_id)
+	local value=convert(arg, arg_define.type)
+	if value==nil then
+		announce('Except '..arg_define.type..' to ['..arg_define.name..'].', peer_id)
+		return nil, false
+	end
+	if arg_define.type=='integer' or arg_define.type=='number' then
+		if arg_define.min and value<arg_define.min then
+			announce(arg_define.name ..'cannot be set to less than '..tostring(arg_define.min), peer_id)
+			return nil, false
+		end
+		if arg_define.max and value>arg_define.max then
+			announce(arg_define.name ..'cannot be set to greater than '..tostring(arg_define.max), peer_id)
+			return nil, false
+		end
+	end
+	return value, true
+end
