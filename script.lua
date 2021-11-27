@@ -131,6 +131,11 @@ g_settings={
 		type='number',
 		min=1, max=100,
 	},
+	{
+		name='Auto vehicle cleanup',
+		key='gc_vehicle',
+		type='boolean',
+	},
 }
 
 g_default_savedata={
@@ -145,6 +150,7 @@ g_default_savedata={
 	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
 	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
 	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
+	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
 	supply_vehicles	={},
 	flag_vehicles	={},
 }
@@ -919,7 +925,7 @@ function updateVehicle(vehicle)
 	if not vehicle.alive then
 		if vehicle.gc_time>0 then
 			vehicle.gc_time=vehicle.gc_time-1
-		else
+		elseif g_savedata.gc_vehicle then
 			server.despawnVehicle(vehicle.vehicle_id, true)
 		end
 		return
