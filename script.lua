@@ -615,6 +615,14 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 	local character_id, is_success=server.getPlayerCharacterID(peer_id)
 	if not is_success then return end
 
+	if button_name=='?mm die' then
+		kill(peer_id)
+		return
+	elseif button_name=='?mm ready' then
+		ready(peer_id)
+		return
+	end
+
 	if isSupply(vehicle_id) then
 		if not server.getVehicleButton(vehicle_id, button_name).on then return end
 		local item_supply=g_item_supply_buttons[button_name]
@@ -841,6 +849,7 @@ function leave(peer_id)
 end
 
 function kill(peer_id)
+	if not g_in_game then return end
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 	player.alive=false
