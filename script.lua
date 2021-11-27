@@ -235,7 +235,7 @@ g_commands={
 		name='flag',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
-			spawnFlag(peer_id, name)
+			spawnFlag(peer_id, name:lower())
 		end,
 		args={
 			{name='name', type='string', require=true},
@@ -245,7 +245,7 @@ g_commands={
 		name='delete_flag',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
-			despawnFlag(peer_id, name)
+			despawnFlag(peer_id, name:lower())
 		end,
 		args={
 			{name='name', type='string', require=true},
@@ -1240,7 +1240,7 @@ function renewPopupIds()
 			flag.ui_id=server.getMapID()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
-			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 10, name, r, g, b, a)
+			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
 		end
 	end
 end
@@ -1309,7 +1309,7 @@ function spawnFlag(peer_id, name)
 		local ui_id=server.getMapID()
 		local x,y,z=matrix.position(vehicle_matrix)
 		local r,g,b,a=getColor(name)
-		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 10, name, r, g, b, a)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 30, name, r, g, b, a)
 		g_savedata.flag_vehicles[name]={
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
@@ -1419,7 +1419,6 @@ function findEmptySlot(object_id, slot)
 end
 
 function getColor(name)
-	name=string.lower(name)
 	local color=g_colors[name]
 	if color then
 		return table.unpack(color)
