@@ -48,24 +48,23 @@ g_ammo_supply_buttons={
 	AS_AP={70,1},
 }
 
-g_classes=
-{
-	ultra_light={hp=300},
-	light      ={hp=1000},
-	medium     ={hp=1500},
-	heavy      ={hp=2000},
-	ultra_heavy={hp=2500},
+g_classes={
+	ground_light	={hp=300},
+	ground_medium  	={hp=1200},
+	ground_heavy    ={hp=2400},
+	ground_mega  	={hp=3000},
+	ground_boss		={hp=20000},
 }
 
 g_item_supply_buttons={
-	['Take Extinguisher']={1,10,0,9},
+	['Take Extinguisher']={1,10,0,  9},
 	['Take Torch']       ={1,27,0,400},
 	['Take Welder']      ={1,26,0,250},
 	['Take FlashLight']  ={2,15,0,100},
-	['Take Binoculars']  ={2,6, 0,0},
+	['Take Binoculars']  ={2, 6,0,  0},
 	['Take NightVision'] ={2,17,0,100},
-	['Take Compass']     ={2,8 ,0,0},
-	['Take FirstAidKit'] ={2,11,4,0},
+	['Take Compass']     ={2, 8,0,  0},
+	['Take FirstAidKit'] ={2,11,4,  0},
 }
 
 g_default_savedata={
