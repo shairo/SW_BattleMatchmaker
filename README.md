@@ -17,7 +17,7 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 - `?mm`
   コマンド一覧と現在設定を表示
 - `?mm reset_ui`
-  UI IDを更新する
+  UI IDを更新する<br>
   joinしても左の状態表示Popupが出ないときに実行してください
 - `?mm join (チーム名)`
   チームを作成・参加
@@ -49,28 +49,28 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 ### 管理者用コマンド
 管理者用コマンドの実行にはAdminが必要です。
 
-- `?mm pause`
+- `?mm pause`<br>
   制限時間のタイマーを一時停止
-- `?mm resume`
+- `?mm resume`<br>
   制限時間のタイマーを再開
-- `?mm add_time [追加する時間(分)]`
+- `?mm add_time [追加する時間(分)]`<br>
   制限時間を追加
-- `?mm reset`
+- `?mm reset`<br>
   状態をすべてリセット
-- `?mm clear_supply`
+- `?mm clear_supply`<br>
   全ての準備用の装備品類を削除
-- `?mm flag [名前]`
+- `?mm flag [名前]`<br>
   旗を設置
-- `?mm delete_flag [名前]`
+- `?mm delete_flag [名前]`<br>
   旗を削除
-- `?mm clear_flag`
+- `?mm clear_flag`<br>
   すべての旗を削除
-- `?mm set [設定名] [設定値]`
-  ゲーム設定を変更する
+- `?mm set [設定名] [設定値]`<br>
+  ゲーム設定を変更する<br>
   `?mm set` のみで設定名の一覧を表示する
 
 
-## 車両について
+## 車両
 チームに所属しているプレイヤーが車両に搭乗すると、その車両は撃破判定管理の対象になります。
 車両のHPがゼロになるか、撃破判定用バッテリーが破壊されると車両は撃破状態になります。
 プレイヤーが最後に搭乗した車両が撃破されると、プレイヤーは死亡状態になります。
@@ -94,12 +94,12 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 | Artillery Cannon   |     |         | AS_HE          | AS_F          | AS_AP          |            |
 
 
-## 準備用車両
+## 装備品類の呼び出し
 `?mm supply` で準備用の装備品類を呼び出せます。
 一人一つまで呼び出す事が可能で、試合開始と同時に削除されます。
 
 
-## 拠点
+## 旗の設置
 管理者は `?mm flag (名前)` で旗を設置できます。
 旗はマップ画面から視認可能です。集合場所の設定などに使用してください。
 
@@ -107,27 +107,27 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 ## 変更可能な設定
 管理者は `?mm set` コマンドでゲームの設定を変更することができます。
 
-- `?mm set vehicle_hp [基礎HP]`
-  車両の基礎HPを設定
-- `?mm set battery_name [バッテリー名]`
+- `?mm set vehicle_hp [HP]`<br>
+  車両の初期HPを設定
+- `?mm set battery_name [バッテリー名]`<br>
   車両の撃破判定用バッテリー名を設定
-- `?mm set supply_ammo [補充弾薬数]`
+- `?mm set supply_ammo [補充弾薬数]`<br>
   車両毎の弾薬取得可能回数を設定
-- `?mm set order_enabled [true|false]`
+- `?mm set order_enabled [true|false]`<br>
   車両テレポートの可否を設定
-- `?mm set cd_sec [カウントダウン時間(秒)]`
+- `?mm set cd_sec [カウントダウン時間(秒)]`<br>
   カウントダウン時間を設定
-- `?mm set game_time [ゲーム制限時間(分)]`
+- `?mm set game_time [ゲーム制限時間(分)]`<br>
   ゲーム制限時間を設定
-- `?mm set remind_time [残り時間のリマインド間隔(分)]`
+- `?mm set remind_time [残り時間のリマインド間隔(分)]`<br>
   残り時間のリマインド間隔を設定
-- `?mm set tps_enabled [true|false]`
+- `?mm set tps_enabled [true|false]`<br>
   試合中に三人称視点を許可するかを設定
-- `?mm set ext_volume [容量(%)]`
+- `?mm set ext_volume [容量(%)]`<br>
   消化器の初期容量設定
-- `?mm set torch_volume [容量(%)]`
+- `?mm set torch_volume [容量(%)]`<br>
   修理トーチの初期容量設定
-- `?mm set welder_volume [容量(%)]`
+- `?mm set welder_volume [容量(%)]`<br>
   水中トーチの初期容量設定
-- `?mm set gc_vehicle [容量(%)]`
+- `?mm set gc_vehicle [容量(%)]`<br>
   撃破車両の自動削除設定
