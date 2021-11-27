@@ -50,35 +50,35 @@ g_ammo_supply_buttons={
 
 g_classes={
 	ground_light	={hp=300},
-	ground_medium  	={hp=1200},
-	ground_heavy    ={hp=2400},
-	ground_mega  	={hp=3000},
+	ground_medium	={hp=1200},
+	ground_heavy	={hp=2400},
+	ground_mega		={hp=3000},
 	ground_boss		={hp=20000},
 }
 
 g_item_supply_buttons={
-	['Take Extinguisher']={1,10,0,  9},
-	['Take Torch']       ={1,27,0,400},
-	['Take Welder']      ={1,26,0,250},
-	['Take FlashLight']  ={2,15,0,100},
-	['Take Binoculars']  ={2, 6,0,  0},
-	['Take NightVision'] ={2,17,0,100},
-	['Take Compass']     ={2, 8,0,  0},
-	['Take FirstAidKit'] ={2,11,4,  0},
+	['Take Extinguisher']	={1,10,0,  9},
+	['Take Torch']			={1,27,0,400},
+	['Take Welder']			={1,26,0,250},
+	['Take FlashLight']		={2,15,0,100},
+	['Take Binoculars']		={2, 6,0,  0},
+	['Take NightVision']	={2,17,0,100},
+	['Take Compass']		={2, 8,0,  0},
+	['Take FirstAidKit']	={2,11,4,  0},
 }
 
 g_default_savedata={
-	base_hp=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
-	battery_name='killed',
-	supply_ammo_amount=property.slider('Default Ammo Supply', 0, 100, 1, 40),
-	order_command=property.checkbox('Default Order Command Enabled', true),
-	cd_time_sec=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
-	game_time_min=property.slider('Default Game time (min)', 1, 60, 1, 20),
-	remind_time_min=property.slider('Default Remind time (min)', 1, 10, 1, 1),
-	tps_enable=property.checkbox('Default Third Person Enabled', false),
-	extinguisher_volume=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
-	torch_volume=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
-	welder_volume=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
+	base_hp				=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
+	battery_name		='killed',
+	supply_ammo_amount	=property.slider('Default Ammo Supply', 0, 100, 1, 40),
+	order_command		=property.checkbox('Default Order Command Enabled', true),
+	cd_time_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
+	game_time_min		=property.slider('Default Game time (min)', 1, 60, 1, 20),
+	remind_time_min		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
+	tps_enable			=property.checkbox('Default Third Person Enabled', false),
+	extinguisher_volume	=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
+	torch_volume		=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
+	welder_volume		=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
 	supply_vehicles={},
 	flag_vehicles={},
 }
@@ -1444,12 +1444,12 @@ function getColor(name)
 end
 
 g_colors={
-	red   ={255,0  ,0,  255},
-	green ={0,  255,0,  255},
-	blue  ={0,  0,  255,255},
-	yellow={255,255,0,  255},
-	ylw   ={255,255,0,  255},
-	pink  ={255,0,  255,255},
-	white ={255,255,255,255},
-	black ={0,  0,  0,  255},
+	red		={255,0  ,0,  255},
+	green	={0,  255,0,  255},
+	blue	={0,  0,  255,255},
+	yellow	={255,255,0,  255},
+	ylw		={255,255,0,  255},
+	pink	={255,0,  255,255},
+	white	={255,255,255,255},
+	black	={0,  0,  0,  255},
 }
