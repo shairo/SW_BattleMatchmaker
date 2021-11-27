@@ -135,5 +135,5 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   修理トーチの初期容量設定
 - `?mm set welder_volume [容量(%)]`<br>
   水中トーチの初期容量設定
-- `?mm set gc_vehicle`<br>
+- `?mm set gc_vehicle [true|false]`<br>
   撃破車両の自動削除設定
