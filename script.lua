@@ -1102,11 +1102,8 @@ function finishGame()
 		local peer_id=player.id
 		local object_id, is_success=server.getPlayerCharacterID(peer_id)
 		if is_success then
+			server.reviveCharacter(object_id)
 			server.setCharacterData(object_id, 100, false, false)
-			server.setCharacterItem(object_id, 2, 15, false, 0, 100)--flashlight
-			server.setCharacterItem(object_id, 3, 6, false, 0, 0)--binoculars
-			server.setCharacterItem(object_id, 4, 8, false, 0, 0)--compass
-			announce("You are recovered.", peer_id)
 		end
 	end
 
