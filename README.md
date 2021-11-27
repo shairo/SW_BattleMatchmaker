@@ -14,30 +14,30 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 ### プレイヤー用コマンド
 プレイヤー用コマンドの実行にはAuthが必要です。
 
-- `?mm`
+- `?mm`<br>
   コマンド一覧と現在設定を表示
-- `?mm reset_ui`
+- `?mm reset_ui`<br>
   UI IDを更新する<br>
   joinしても左の状態表示Popupが出ないときに実行してください
-- `?mm join (チーム名)`
+- `?mm join (チーム名)`<br>
   チームを作成・参加
-- `?mm leave`
+- `?mm leave`<br>
   チームから離脱
-- `?mm ready`
+- `?mm ready`<br>
   自分を準備状態に設定
-- `?mm wait`
+- `?mm wait`<br>
   自分を待機状態に設定
-- `?mm die`
+- `?mm die`<br>
   自分を死亡状態に設定（自殺）
-- `?mm order`
+- `?mm order`<br>
   車両をプレイヤーの位置にテレポートさせる
-- `?mm start`
+- `?mm start`<br>
   試合開始前カウントダウンを再開
-- `?mm stop`
+- `?mm stop`<br>
   試合開始前カウントダウンを中断
-- `?mm supply`
+- `?mm supply`<br>
   準備用の装備品類を設置
-- `?mm delete_supply`
+- `?mm delete_supply`<br>
   準備用の装備品類を削除
 
 管理者はjoin/leave/ready/waitコマンドの末尾にpeer_idをつけることで他人をチームに入れたり抜いたりできます。
