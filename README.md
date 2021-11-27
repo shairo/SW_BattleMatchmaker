@@ -112,6 +112,11 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   車両の初期HPを設定
 - `?mm set battery_name [バッテリー名]`<br>
   車両の撃破判定用バッテリー名を設定
+- `?mm set ammo_supply [true|false]`<br>
+  弾薬補給を有効にするか設定
+- `?mm set ammo_mg/ammo_la/ammo_ra/ammo_ha/ammo_bs/ammo_as [弾薬数]`<br>
+  各砲タイプ毎の弾薬補給可能回数を設定<br>
+  `-1` を指定すると無限
 - `?mm set supply_ammo [補充弾薬数]`<br>
   車両毎の弾薬取得可能回数を設定
 - `?mm set order_enabled [true|false]`<br>

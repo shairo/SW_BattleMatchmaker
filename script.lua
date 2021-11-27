@@ -15,37 +15,37 @@ g_timer=0
 g_remind_interval=3600
 
 g_ammo_supply_buttons={
-	MG_K={42,50},
-	MG_AP={45,50},
-	MG_I={46,50},
+	MG_K={42,50,'mg'},
+	MG_AP={45,50,'mg'},
+	MG_I={46,50,'mg'},
 
-	LA_K={47,50},
-	LA_HE={48,50},
-	LA_F={49,50},
-	LA_AP={50,50},
-	LA_I={51,50},
+	LA_K={47,50,'la'},
+	LA_HE={48,50,'la'},
+	LA_F={49,50,'la'},
+	LA_AP={50,50,'la'},
+	LA_I={51,50,'la'},
 
-	RA_K={52,25},
-	RA_HE={53,25},
-	RA_F={54,25},
-	RA_AP={55,25},
-	RA_I={56,25},
+	RA_K={52,25,'ra'},
+	RA_HE={53,25,'ra'},
+	RA_F={54,25,'ra'},
+	RA_AP={55,25,'ra'},
+	RA_I={56,25,'ra'},
 
-	HA_K={57,10},
-	HA_HE={58,10},
-	HA_F={59,10},
-	HA_AP={60,10},
-	HA_I={61,10},
+	HA_K={57,10,'ha'},
+	HA_HE={58,10,'ha'},
+	HA_F={59,10,'ha'},
+	HA_AP={60,10,'ha'},
+	HA_I={61,10,'ha'},
 
-	BS_K={62,1},
-	BS_HE={63,1},
-	BS_F={64,1},
-	BS_AP={65,1},
-	BS_I={66,1},
+	BS_K={62,1,'bs'},
+	BS_HE={63,1,'bs'},
+	BS_F={64,1,'bs'},
+	BS_AP={65,1,'bs'},
+	BS_I={66,1,'bs'},
 
-	AS_HE={68,1},
-	AS_F={66,1},
-	AS_AP={70,1},
+	AS_HE={68,1,'as'},
+	AS_F={66,1,'as'},
+	AS_AP={70,1,'as'},
 }
 
 g_classes={
@@ -80,10 +80,45 @@ g_settings={
 		type='string',
 	},
 	{
-		name='Supply Ammo Ammount',
-		key='supply_ammo',
+		name='Ammo supply Enabled',
+		key='ammo_supply',
+		type='boolean',
+	},
+	{
+		name='MG Ammo Count',
+		key='ammo_mg',
 		type='integer',
-		min=0,
+		min=-1,
+	},
+	{
+		name='LA Ammo Count',
+		key='ammo_la',
+		type='integer',
+		min=-1,
+	},
+	{
+		name='RA Ammo Count',
+		key='ammo_ra',
+		type='integer',
+		min=-1,
+	},
+	{
+		name='HA Ammo Count',
+		key='ammo_ha',
+		type='integer',
+		min=-1,
+	},
+	{
+		name='BS Ammo Count',
+		key='ammo_bs',
+		type='integer',
+		min=-1,
+	},
+	{
+		name='AS Ammo Count',
+		key='ammo_as',
+		type='integer',
+		min=-1,
 	},
 	{
 		name='Order Command Enabled',
@@ -141,7 +176,13 @@ g_settings={
 g_default_savedata={
 	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	battery_name	='killed',
-	supply_ammo		=property.slider('Default Ammo Supply', 0, 100, 1, 40),
+	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
+	ammo_mg	=-1,
+	ammo_la	=-1,
+	ammo_ra	=-1,
+	ammo_ha	=-1,
+	ammo_bs	=-1,
+	ammo_as	=-1,
 	order_enabled	=property.checkbox('Default Order Command Enabled', true),
 	cd_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
 	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
@@ -639,12 +680,11 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		return
 	end
 
-	if g_savedata.supply_ammo<=0 then return end
+	if not g_savedata.ammo_supply then return end
 
 	local equipment_data=g_ammo_supply_buttons[button_name]
 	if not equipment_data then return end
-	local equipment_id=equipment_data[1]
-	local equipment_amount=equipment_data[2]
+	local equipment_id,amount,ammo_type=table.unpack(equipment_data)
 
 	local current_equipment_id=server.getCharacterItem(character_id, 1)
 	if current_equipment_id>0 then
@@ -655,19 +695,22 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 	end
 
 	local vehicle=findVehicle(vehicle_id)
-	if vehicle and vehicle.remain_ammo<=0 then
+	if vehicle and vehicle.ammo[ammo_type]==0 then
 		announce('Out of ammo.', peer_id)
 		return
 	end
 
-	server.setCharacterItem(character_id, 1, equipment_id, true, equipment_amount)
+	server.setCharacterItem(character_id, 1, equipment_id, true, amount)
 
 	if vehicle then
-		vehicle.remain_ammo=vehicle.remain_ammo-1
-		announce('Ammo here! (Remain:'..tostring(vehicle.remain_ammo)..')', peer_id)
-	else
-		announce('Ammo here!', peer_id)
+		local remain_ammo=vehicle.ammo[ammo_type]-1
+		if remain_ammo>=0 then
+			vehicle.ammo[ammo_type]=remain_ammo
+			announce('Ammo here! (Remain:'..tostring(remain_ammo)..')', peer_id)
+			return
+		end
 	end
+	announce('Ammo here!', peer_id)
 end
 
 function onPlayerSit(peer_id, vehicle_id, seat_name)
@@ -847,7 +890,14 @@ function registerVehicle(vehicle_id)
 	vehicle={
 		vehicle_id=vehicle_id,
 		alive=true,
-		remain_ammo=g_savedata.supply_ammo//1|0,
+		ammo={
+			mg=g_savedata.ammo_mg//1|0,
+			la=g_savedata.ammo_la//1|0,
+			ra=g_savedata.ammo_ra//1|0,
+			ha=g_savedata.ammo_ha//1|0,
+			bs=g_savedata.ammo_bs//1|0,
+			as=g_savedata.ammo_as//1|0,
+		},
 		gc_time=600,
 	}
 
