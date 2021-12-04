@@ -263,6 +263,17 @@ g_commands={
 		},
 	},
 	{
+		name='ready_all',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			if g_in_game then
+				announce('Cannot ready after game start.', peer_id)
+				return
+			end
+			readyAll()
+		end,
+	},
+	{
 		name='wait',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
@@ -866,6 +877,20 @@ function ready(peer_id)
 	player.ready=true
 	startCountdown()
 	g_status_dirty=true
+end
+
+function readyAll()
+	local dirty=false
+	for peer_id,player in pairs(g_players) do
+		if player.alive and not player.ready then
+			player.ready=true
+			dirty=true
+		end
+	end
+	if dirty then
+		startCountdown()
+		g_status_dirty=true
+	end
 end
 
 function wait(peer_id)
