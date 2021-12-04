@@ -80,6 +80,12 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Max Vehicle Damage',
+		key='max_damage',
+		type='integer',
+		min=0,
+	},
+	{
 		name='Kill Battery Name',
 		key='battery_name',
 		type='string',
@@ -190,6 +196,7 @@ g_temporary_team='Standby'
 g_default_savedata={
 	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
+	max_damage		=1000,
 	battery_name	='killed',
 	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
 	ammo_mg			=-1,
@@ -801,7 +808,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z)
 	if not vehicle then return end
 
 	if vehicle.hp then
-		vehicle.hp=math.max(vehicle.hp-damage_amount,0)
+		vehicle.damage_in_frame=vehicle.damage_in_frame+damage_amount
 		g_status_dirty=true
 	end
 end
@@ -981,6 +988,7 @@ function registerVehicle(vehicle_id)
 			as=g_savedata.ammo_as//1|0,
 		},
 		gc_time=600,
+		damage_in_frame=0,
 	}
 
 	local vehicle_hp=0
@@ -1076,9 +1084,15 @@ function updateVehicle(vehicle)
 		end
 	end
 
-	if vehicle.hp==0 then
-		vehicle.alive=false
+	if vehicle.hp and vehicle.damage_in_frame>0 then
+		local damage_in_frame=math.min(vehicle.damage_in_frame, g_savedata.max_damage)//1|0
+		vehicle.hp=math.max(vehicle.hp-damage_in_frame, 0)
+
+		if vehicle.hp==0 then
+			vehicle.alive=false
+		end
 	end
+	vehicle.damage_in_frame=0
 
 	if vehicle.alive then
 		return

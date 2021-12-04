@@ -117,6 +117,8 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
   車両の初期HPを設定
 - `?mm set vehicle_class [true|false]`<br>
   クラス制の有効無効を設定
+- `?mm set max_damage [ダメージ量]`<br>
+  1tickに受けられる最大ダメージ量
 - `?mm set battery_name [バッテリー名]`<br>
   車両の撃破判定用バッテリー名を設定
 - `?mm set ammo_supply [true|false]`<br>
