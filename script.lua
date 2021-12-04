@@ -178,6 +178,13 @@ g_settings={
 	},
 }
 
+g_default_teams={
+	'RED',
+	'BLUE',
+	'PINK',
+	'YLW',
+}
+
 g_default_savedata={
 	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
@@ -429,6 +436,20 @@ g_commands={
 		end,
 		args={
 			{name='minute', type='number', require=true},
+		},
+	},
+	{
+		name='shuffle',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, team_count)
+			if g_in_game or g_in_countdown then
+				announce('Cannot shuffle after game start.', peer_id)
+				return
+			end
+			shuffle(team_count)
+		end,
+		args={
+			{name='team_count', type='integer', require=true, min=2, max=#g_default_teams},
 		},
 	},
 	{
@@ -853,6 +874,31 @@ function leave(peer_id)
 			startCountdown()
 		end
 	end
+end
+
+function shuffle(team_count, exec_peer_id)
+	local peer_ids={}
+	for peer_id,player in pairs(g_players) do
+		player.ready=false
+		table.insert(peer_ids, peer_id)
+	end
+
+	if #peer_ids<1 then
+		announce('Player not enough.', exec_peer_id)
+		return
+	end
+
+	for i=1,#peer_ids do
+		local pick=math.random(1, #peer_ids)
+		local peer_id=peer_ids[pick]
+		local team=g_default_teams[1+(i-1)%team_count]
+		g_players[peer_id].team=team
+		announce('You joined to '..team..'.', peer_id)
+		table.remove(peer_ids, pick)
+	end
+
+	stopCountdown()
+	g_status_dirty=true
 end
 
 function kill(peer_id)
