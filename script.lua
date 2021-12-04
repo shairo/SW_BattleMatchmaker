@@ -69,10 +69,15 @@ g_item_supply_buttons={
 
 g_settings={
 	{
-		name='Base HP',
+		name='Vehicle HP',
 		key='vehicle_hp',
 		type='integer',
 		min=0,
+	},
+	{
+		name='Vehicle class Enabled',
+		key='vehicle_class',
+		type='boolean',
 	},
 	{
 		name='Kill Battery Name',
@@ -175,6 +180,7 @@ g_settings={
 
 g_default_savedata={
 	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
+	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
 	battery_name	='killed',
 	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
 	ammo_mg			=-1,
@@ -901,13 +907,17 @@ function registerVehicle(vehicle_id)
 		gc_time=600,
 	}
 
-	local vehicle_hp=g_savedata.vehicle_hp
-	for class_name,class in pairs(g_classes) do
-		local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
-		if is_success then
-			vehicle_hp=class.hp
-			break
+	local vehicle_hp=0
+	if g_savedata.vehicle_class then
+		for class_name,class in pairs(g_classes) do
+			local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
+			if is_success then
+				vehicle_hp=class.hp
+				break
+			end
 		end
+	else
+		vehicle_hp=g_savedata.vehicle_hp
 	end
 
 	if vehicle_hp and vehicle_hp>0 then
