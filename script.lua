@@ -599,7 +599,8 @@ function onCreate(is_world_create)
 	clearFlags()
 
 	registerPopup('status', -0.9, 0.2)
-	registerPopup('countdown', 0, 0.8)
+	registerPopup('countdown', 0, 0.6)
+	registerPopup('game_time', 0, 0.9)
 
 	setSettingsToStandby()
 end
@@ -632,7 +633,7 @@ function onTick()
 			local sec=g_timer//60
 			g_timer=g_timer-1
 			local time_text=string.format('%02.f:%02.f', sec//60,sec%60)
-			setPopup('countdown', true, time_text)
+			setPopup('game_time', true, time_text)
 
 			if g_timer>0 and g_timer%g_remind_interval==0 then
 				server.notify(-1, 'Time Reminder', time_text..' left.', 1)
@@ -1234,6 +1235,7 @@ function startGame()
 		player.ready=false
 	end
 
+	setPopup('countdown', false)
 	clearSupplies()
 	setSettingsToBattle()
 end
@@ -1243,7 +1245,7 @@ function finishGame()
 	g_in_countdown=false
 	g_pause=false
 	g_status_dirty=true
-	setPopup('countdown', false)
+	setPopup('game_time', false)
 
 	for i,player in pairs(server.getPlayers()) do
 		local peer_id=player.id
