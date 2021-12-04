@@ -185,6 +185,8 @@ g_default_teams={
 	'YLW',
 }
 
+g_temporary_team='Standby'
+
 g_default_savedata={
 	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
 	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
@@ -220,11 +222,14 @@ g_commands={
 				announce('Cannot join after game start..', peer_id)
 				return
 			end
+			if not team_name then
+				team_name=g_temporary_team
+			end
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			join(target_peer_id or peer_id, team_name, is_admin)
 		end,
 		args={
-			{name='team_name', type='string', require=true},
+			{name='team_name', type='string', require=false},
 			{name='peer_id', type='integer', require=false},
 		},
 	},
