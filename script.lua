@@ -3,10 +3,11 @@
 
 g_players={}
 g_popups={}
-g_status_text=nil
+g_team_stats={}
 g_vehicles={}
 g_spawned_vehicles={}
-g_status_dirty=false
+g_team_status_dirty=false
+g_player_status_dirty=false
 g_finish_dirty=false
 g_in_game=false
 g_in_countdown=false
@@ -468,10 +469,13 @@ g_commands={
 		name='reset',
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
+			for i,player in pairs(g_players) do
+				unregisterPopup(player.popup_name)
+			end
 			g_players={}
 			g_vehicles={}
-			g_status_dirty=true
-			setPopup('status', false)
+			g_team_status_dirty=true
+			g_player_status_dirty=true
 			clearSupplies()
 			clearFlags()
 			finishGame()
@@ -482,7 +486,7 @@ g_commands={
 		name='reset_ui',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			renewPopupIds()
+			renewUiIds()
 			announce('Refresh ui ids.', -1)
 		end,
 	},
@@ -605,7 +609,6 @@ function onCreate(is_world_create)
 	clearSupplies()
 	clearFlags()
 
-	registerPopup('status', -0.9, 0.2)
 	registerPopup('countdown', 0, 0.6)
 	registerPopup('game_time', 0, 0.9)
 
@@ -656,16 +659,21 @@ function onTick()
 		checkFinish()
 	end
 
-	if g_status_dirty then
-		g_status_dirty=false
-		updateStatus()
+	if g_team_status_dirty then
+		g_team_status_dirty=false
+		updateTeamStatus()
+	end
+
+	if g_player_status_dirty then
+		g_player_status_dirty=false
+		updatePlayerStatus()
 	end
 
 	updatePopups()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
-	renewPopupIds()
+	renewUiIds()
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
@@ -772,7 +780,7 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 	if vehicle and vehicle.alive then
 		player.vehicle_id=vehicle_id
 	end
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
@@ -792,7 +800,7 @@ function onVehicleLoad(vehicle_id)
 	if vehicle and vehicle.alive then
 		player.vehicle_id=vehicle_id
 	end
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
@@ -800,7 +808,7 @@ function onVehicleDespawn(vehicle_id, peer_id)
 	unregisterVehicle(vehicle_id)
 end
 
-function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z)
+function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
 	if not g_in_game then return end
 	if damage_amount<=0 then return end
 
@@ -809,7 +817,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z)
 
 	if vehicle.hp then
 		vehicle.damage_in_frame=vehicle.damage_in_frame+damage_amount
-		g_status_dirty=true
+		g_player_status_dirty=true
 	end
 end
 
@@ -851,6 +859,7 @@ function join(peer_id, team, force)
 		alive=true,
 		ready=g_in_game,
 		vehicle_id=-1,
+		popup_name='player_status_'..peer_id,
 	}
 	g_players[peer_id]=player
 
@@ -863,7 +872,8 @@ function join(peer_id, team, force)
 		end
 	end
 
-	g_status_dirty=true
+	g_team_status_dirty=true
+	g_player_status_dirty=true
 
 	announce('You joined to '..team..'.', peer_id)
 
@@ -873,8 +883,10 @@ end
 function leave(peer_id)
 	local player=g_players[peer_id]
 	if not player then return end
+	unregisterPopup(player.popup_name)
 	g_players[peer_id]=nil
-	g_status_dirty=true
+	g_team_status_dirty=true
+	g_player_status_dirty=true
 
 	announce('You leaved from '..player.team..'.', peer_id)
 
@@ -911,7 +923,8 @@ function shuffle(team_count, exec_peer_id)
 	end
 
 	stopCountdown()
-	g_status_dirty=true
+	g_team_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function kill(peer_id)
@@ -920,7 +933,7 @@ function kill(peer_id)
 	if not player or not player.alive then return end
 	player.alive=false
 	player.vehicle_id=-1
-	g_status_dirty=true
+	g_player_status_dirty=true
 	notify('Kill Log', player.name..' is dead.', 9, -1)
 	g_finish_dirty=true
 end
@@ -935,7 +948,7 @@ function ready(peer_id)
 	end
 	player.ready=true
 	startCountdown()
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function readyAll()
@@ -948,7 +961,7 @@ function readyAll()
 	end
 	if dirty then
 		startCountdown()
-		g_status_dirty=true
+		g_player_status_dirty=true
 	end
 end
 
@@ -958,7 +971,7 @@ function wait(peer_id)
 	if not player or not player.ready then return end
 	player.ready=false
 	stopCountdown()
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 -- Vehicle Functions --
@@ -1036,7 +1049,7 @@ function unregisterVehicle(vehicle_id)
 		end
 	end
 
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function reregisterVehicles()
@@ -1060,7 +1073,7 @@ function reregisterVehicles()
 
 			vehicle.remain_ammo=g_savedata.supply_ammo//1|0
 
-			g_status_dirty=true
+			g_player_status_dirty=true
 		end
 	end
 end
@@ -1119,20 +1132,69 @@ function updateVehicle(vehicle)
 	end
 
 	server.setVehicleTooltip(vehicle_id, 'Destroyed')
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 -- System Functions --
 
-function updateStatus()
-	local team_stats={}
-	local any=false
+function updateTeamStatus()
+	-- gen map
+	local team_map={}
 	for _,player in pairs(g_players) do
-		local stat=team_stats[player.team]
-		if not stat then
-			stat=''
+		local team_list=team_map[player.team]
+		if not team_list then
+			team_list={player}
+			team_map[player.team]=team_list
+		else
+			table.insert(team_list, player)
 		end
+	end
 
+	-- remove
+	local i=#g_team_stats
+	while i>0 do
+		local team_status=g_team_stats[i]
+		if not team_map[team_status.name] then
+			unregisterPopup(team_status.popup_name)
+			table.remove(g_team_stats, i)
+		end
+		i=i-1
+	end
+
+	-- add
+	for team_name,player_list in pairs(team_map) do
+		local team_status,idx=registerTeamStatus(team_name)
+
+		local popup_x=-1.04+idx*0.18
+		local popup_y=0.9
+		registerPopup(team_status.popup_name, popup_x, popup_y)
+
+		for i,player in ipairs(player_list) do
+			local player_popup_y=popup_y-i*0.19
+			registerPopup(player.popup_name, popup_x, player_popup_y)
+		end
+	end
+end
+
+function registerTeamStatus(name)
+	for i,team_status in ipairs(g_team_stats) do
+		if team_status.name==name then
+			return team_status,i
+		end
+	end
+	local popup_name='team_status_'..name
+	registerPopup(popup_name, 0, 0)
+	setPopup(popup_name, true, '* '..name..' *')
+	local team_status={
+		name=name,
+		popup_name=popup_name,
+	}
+	table.insert(g_team_stats, team_status)
+	return team_status,#g_team_stats
+end
+
+function updatePlayerStatus()
+	for _,player in pairs(g_players) do
 		local hp=nil
 		local battery_name=nil
 		if player.vehicle_id>=0 then
@@ -1143,21 +1205,7 @@ function updateStatus()
 			end
 		end
 
-		team_stats[player.team]=stat..'\n'..playerToString(player.name,player.alive,player.ready,hp,battery_name)
-		any=true
-	end
-
-	if any then
-		local status_text=''
-		local first=true
-		for team,stat in pairs(team_stats) do
-			if not first then status_text=status_text..'\n\n' end
-			status_text=status_text..'* Team '..team..' *'..stat
-			first=false
-		end
-		setPopup('status', true, status_text)
-	else
-		setPopup('status', false)
+		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp,battery_name))		
 	end
 end
 
@@ -1193,7 +1241,7 @@ function startCountdown(force, peer_id)
 	announce('Countdown start.', -1)
 	g_timer=g_savedata.cd_sec*60//1|0
 	g_in_countdown=true
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function stopCountdown()
@@ -1201,7 +1249,7 @@ function stopCountdown()
 	announce('Countdown stop.', -1)
 	setPopup('countdown', false)
 	g_in_countdown=false
-	g_status_dirty=true
+	g_player_status_dirty=true
 end
 
 function checkFinish()
@@ -1241,7 +1289,7 @@ function startGame()
 	g_in_game=true
 	g_in_countdown=false
 	g_pause=false
-	g_status_dirty=true
+	g_player_status_dirty=true
 	g_timer=g_savedata.game_time*60*60//1|0
 	g_remind_interval=g_savedata.remind_time*60*60//1|0
 
@@ -1258,7 +1306,7 @@ function finishGame()
 	g_in_game=false
 	g_in_countdown=false
 	g_pause=false
-	g_status_dirty=true
+	g_player_status_dirty=true
 	setPopup('game_time', false)
 
 	for i,player in pairs(server.getPlayers()) do
@@ -1295,6 +1343,13 @@ end
 -- UI
 
 function registerPopup(name, x, y)
+	local popup=findPopup(name)
+	if popup then
+		popup.x=x
+		popup.y=y
+		popup.is_dirty=true
+		return
+	end
 	table.insert(g_popups, {
 		name=name,
 		x=x,
@@ -1305,6 +1360,17 @@ function registerPopup(name, x, y)
 		is_dirty=true,
 	})
 end
+
+function unregisterPopup(name)
+	for i,popup in ipairs(g_popups) do
+		if popup.name==name then
+			server.removeMapID(-1, popup.ui_id)
+			table.remove(g_popups, i)
+			return
+		end
+	end
+end
+
 function findPopup(name)
 	for i,popup in ipairs(g_popups) do
 		if popup.name==name then
@@ -1312,6 +1378,7 @@ function findPopup(name)
 		end
 	end
 end
+
 function setPopup(name, is_show, text)
 	local popup=findPopup(name)
 	if not popup then return end
@@ -1324,6 +1391,7 @@ function setPopup(name, is_show, text)
 		popup.is_dirty=true
 	end
 end
+
 function updatePopups()
 	for i,popup in ipairs(g_popups) do
 		if popup.is_dirty then
@@ -1332,7 +1400,15 @@ function updatePopups()
 		end
 	end
 end
-function renewPopupIds()
+
+function clearPopups()
+	for i,popup in ipairs(g_popups) do
+		server.removeMapID(-1, popup.ui_id)
+	end
+	g_popups={}
+end
+
+function renewUiIds()
 	for i,popup in ipairs(g_popups) do
 		server.removeMapID(-1, popup.ui_id)
 		popup.ui_id=server.getMapID()
@@ -1359,12 +1435,6 @@ function renewPopupIds()
 			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
 		end
 	end
-end
-function clearPopups()
-	for i,popup in ipairs(g_popups) do
-		server.removeMapID(-1, popup.ui_id)
-	end
-	g_popups={}
 end
 
 -- Support vehicle
