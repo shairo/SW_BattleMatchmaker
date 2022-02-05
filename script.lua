@@ -183,6 +183,17 @@ g_settings={
 		key='gc_vehicle',
 		type='boolean',
 	},
+	{
+		name='MG Auto reloading',
+		key='mg_auto_reload',
+		type='boolean',
+	},
+	{
+		name='MG Auto reloading interval (sec)',
+		key='mg_reload_time',
+		type='number',
+		min=1,
+	},
 }
 
 g_default_teams={
@@ -217,7 +228,12 @@ g_default_savedata={
 	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
 	supply_vehicles	={},
 	flag_vehicles	={},
+	mg_auto_reload	=property.checkbox('Default MG Auto reloading', true),
+	mg_reload_time	=property.slider('Default MG Auto reloading interval (sec)', 1, 60, 1, 20),
 }
+
+g_mag_names={}
+for i=1,10 do g_mag_names[i]='magazine_'..tostring(i) end
 
 -- Commands --
 
@@ -1002,6 +1018,8 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
+		reload_check_time=0,
+		reload_mag=nil,
 	}
 
 	local vehicle_hp=0
@@ -1089,6 +1107,35 @@ function updateVehicle(vehicle)
 	end
 
 	local vehicle_id=vehicle.vehicle_id
+
+	-- auto reloading
+	if not g_savedata.mg_auto_reload then
+	elseif vehicle.reload_check_time<g_savedata.mg_reload_time*60 then
+		vehicle.reload_check_time=vehicle.reload_check_time+1
+	else
+		vehicle.reload_check_time=0
+		local reload_mag=vehicle.reload_mag
+		vehicle.reload_mag=nil
+
+		for i=1,#g_mag_names do
+			local mag_name=g_mag_names[i]
+			local data, is_success=server.getVehicleWeapon(vehicle_id, mag_name)
+			if not is_success then break end
+			if data.capacity==50 and data.ammo==0 then
+				if mag_name==reload_mag then
+					if vehicle.ammo.mg~=0 then
+						if vehicle.ammo.mg>0 then
+							vehicle.ammo.mg=vehicle.ammo.mg-1
+						end
+						server.setVehicleWeapon(vehicle_id, mag_name, 50)
+					end
+				elseif not vehicle.reload_mag then
+					vehicle.reload_mag=mag_name
+				end
+			end
+		end
+	end
+
 
 	if vehicle.battery_name then
 		local battery, is_success=server.getVehicleBattery(vehicle_id, vehicle.battery_name)
