@@ -73,7 +73,7 @@ g_settings={
 		name='Vehicle HP',
 		key='vehicle_hp',
 		type='integer',
-		min=0,
+		min=1,
 	},
 	{
 		name='Vehicle class Enabled',
@@ -85,11 +85,6 @@ g_settings={
 		key='max_damage',
 		type='integer',
 		min=0,
-	},
-	{
-		name='Kill Battery Name',
-		key='battery_name',
-		type='string',
 	},
 	{
 		name='Ammo supply Enabled',
@@ -206,10 +201,9 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider('Default Vehicle HP', 0, 5000, 100, 2000),
+	vehicle_hp		=property.slider('Default Vehicle HP', 100, 5000, 100, 2000),
 	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
 	max_damage		=1000,
-	battery_name	='killed',
 	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
 	ammo_mg			=-1,
 	ammo_la			=-1,
@@ -1022,7 +1016,7 @@ function registerVehicle(vehicle_id)
 		reload_mag=nil,
 	}
 
-	local vehicle_hp=0
+	local vehicle_hp
 	if g_savedata.vehicle_class then
 		for class_name,class in pairs(g_classes) do
 			local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
@@ -1035,19 +1029,8 @@ function registerVehicle(vehicle_id)
 		vehicle_hp=g_savedata.vehicle_hp
 	end
 
-	if vehicle_hp and vehicle_hp>0 then
+	if vehicle_hp then
 		vehicle.hp=math.max(vehicle_hp//1|0,1)
-	end
-
-	local battery_name=g_savedata.battery_name
-	if battery_name then
-		local battery, is_success=server.getVehicleBattery(vehicle_id, battery_name)
-		if is_success and battery.charge>0 then
-			vehicle.battery_name=battery_name
-		end
-	end
-
-	if vehicle.hp or vehicle.battery_name then
 		table.insert(g_vehicles, vehicle)
 		return vehicle
 	end
@@ -1078,15 +1061,6 @@ function reregisterVehicles()
 			local vehicle_hp=g_savedata.vehicle_hp
 			if vehicle_hp and vehicle_hp>0 then
 				vehicle.hp=math.max(vehicle_hp//1|0,1)
-			end
-
-			vehicle.battery_name=nil
-			local battery_name=g_savedata.battery_name
-			if battery_name then
-				local battery, is_success=server.getVehicleBattery(vehicle.vehicle_id, battery_name)
-				if is_success and battery.charge>0 then
-					vehicle.battery_name=battery_name
-				end
 			end
 
 			vehicle.remain_ammo=g_savedata.supply_ammo//1|0
@@ -1133,14 +1107,6 @@ function updateVehicle(vehicle)
 					vehicle.reload_mag=mag_name
 				end
 			end
-		end
-	end
-
-
-	if vehicle.battery_name then
-		local battery, is_success=server.getVehicleBattery(vehicle_id, vehicle.battery_name)
-		if is_success and battery.charge<=0 then
-			vehicle.alive=false
 		end
 	end
 
@@ -1243,24 +1209,21 @@ end
 function updatePlayerStatus()
 	for _,player in pairs(g_players) do
 		local hp=nil
-		local battery_name=nil
 		if player.vehicle_id>=0 then
 			local vehicle=findVehicle(player.vehicle_id)
 			if vehicle then
 				hp=vehicle.hp
-				battery_name=vehicle.battery_name
 			end
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp,battery_name))		
+		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp))		
 	end
 end
 
-function playerToString(name, alive, ready, hp, bat)
+function playerToString(name, alive, ready, hp)
 	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
 	local hp_text=hp and string.format('\nHP:%.0f',hp) or ''
-	local battery_text=bat and '\n(B)' or ''
-	return name..'\nStat:'..stat_text..hp_text..battery_text
+	return name..'\nStat:'..stat_text..hp_text
 end
 
 function startCountdown(force, peer_id)
