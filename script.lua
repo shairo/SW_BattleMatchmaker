@@ -638,7 +638,7 @@ function onDestroy()
 end
 
 function onTick()
-	for i=1,#g_vehicles do
+	for i=#g_vehicles,1,-1 do
 		updateVehicle(g_vehicles[i])
 	end
 
