@@ -941,9 +941,23 @@ function kill(peer_id)
 	if not g_in_game then return end
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
+	local vehicle_id=player.vehicle_id
 	player.alive=false
 	player.vehicle_id=-1
 	g_player_status_dirty=true
+
+	if vehicle_id>=0 then
+		for _,p in pairs(g_players) do
+			if p.alive and p.vehicle_id==vehicle_id then
+				vehicle_id=-1
+				break
+			end
+		end
+		if vehicle_id>=0 then
+			findVehicle(vehicle_id).alive=false
+		end
+	end
+
 	notify('Kill Log', player.name..' is dead.', 9, -1)
 	g_finish_dirty=true
 end
