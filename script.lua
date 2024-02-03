@@ -339,12 +339,13 @@ g_commands={
 				announce('Dead player cannot order vehicle.', peer_id)
 				return
 			end
-			if player.vehicle_id<=0 then
+			local vehicle=findVehicle(player.vehicle_id)
+			if not vehicle then
 				announce('Vehicle not found.', peer_id)
 				return
 			end
 
-			server.setVehiclePos(player.vehicle_id, getAheadMatrix(peer_id, 2, 8))
+			server.setGroupPos(vehicle.group_id, getAheadMatrix(peer_id, 2, 8))
 			announce('Vehicle orderd.', peer_id)
 		end,
 	},
@@ -795,7 +796,7 @@ end
 
 function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
 	if not peer_id or peer_id<0 then return end
-	g_spawned_vehicles[vehicle_id]=peer_id
+	-- g_spawned_vehicles[vehicle_id]=peer_id
 end
 
 function onVehicleLoad(vehicle_id)
@@ -1013,8 +1014,12 @@ function registerVehicle(vehicle_id)
 	local vehicle=findVehicle(vehicle_id)
 	if vehicle then return vehicle end
 
+	local data,is_success=server.getVehicleData(vehicle_id)
+	if not is_success then return end
+
 	vehicle={
 		vehicle_id=vehicle_id,
+		group_id=data.group_id,
 		alive=true,
 		ammo={
 			mg=g_savedata.ammo_mg//1|0,
@@ -1230,7 +1235,7 @@ function updatePlayerStatus()
 			end
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp))		
+		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp))
 	end
 end
 
