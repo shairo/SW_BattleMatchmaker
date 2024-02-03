@@ -612,7 +612,7 @@ end
 
 function onCreate(is_world_create)
 	for k,v in pairs(g_default_savedata) do
-		if not g_savedata[k] then
+		if g_savedata[k]==nil then
 			g_savedata[k]=v
 		end
 	end
