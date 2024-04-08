@@ -13,6 +13,7 @@ g_in_countdown=false
 g_pause=false
 g_timer=0
 g_remind_interval=3600
+g_ui_reset_requested=false
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -638,6 +639,11 @@ function onDestroy()
 end
 
 function onTick()
+	if g_ui_reset_requested then
+		g_ui_reset_requested=false
+		renewUiIds()
+	end
+
 	for i=#g_vehicles,1,-1 do
 		updateVehicle(g_vehicles[i])
 	end
@@ -689,8 +695,7 @@ function onTick()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
-	peer_id=peer_id//1|0
-	renewUiIds()
+	g_ui_reset_requested=true
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
