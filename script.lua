@@ -1334,6 +1334,7 @@ function startGame()
 	announce('- Infinitie Electric:'..tostring(settings.infinite_batteries), -1)
 	announce('- Infinitie Fuel:'..tostring(settings.infinite_fuel), -1)
 	announce('- Infinitie Ammo:'..tostring(settings.infinite_ammo), -1)
+	announce('- Player Damage:'..tostring(settings.player_damage), -1)
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
 end
 
