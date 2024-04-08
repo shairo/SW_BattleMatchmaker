@@ -5,7 +5,6 @@ g_players={}
 g_popups={}
 g_team_stats={}
 g_vehicles={}
-g_spawned_vehicles={}
 g_team_status_dirty=false
 g_player_status_dirty=false
 g_finish_dirty=false
@@ -800,28 +799,7 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 	g_player_status_dirty=true
 end
 
-function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
-	if not peer_id or peer_id<0 then return end
-	-- g_spawned_vehicles[vehicle_id]=peer_id
-end
-
-function onVehicleLoad(vehicle_id)
-	local peer_id=g_spawned_vehicles[vehicle_id]
-	if not peer_id then return end
-
-	g_spawned_vehicles[vehicle_id]=nil
-	local player=g_players[peer_id]
-	if not player or not player.alive then return end
-
-	local vehicle=registerVehicle(vehicle_id)
-	if vehicle and vehicle.alive then
-		player.vehicle_id=vehicle_id
-	end
-	g_player_status_dirty=true
-end
-
 function onVehicleDespawn(vehicle_id, peer_id)
-	g_spawned_vehicles[vehicle_id]=nil
 	unregisterVehicle(vehicle_id)
 end
 
