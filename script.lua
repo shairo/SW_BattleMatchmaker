@@ -1,11 +1,10 @@
 -- Battle Matchmaker
--- Version 1.5.3
+-- Version 1.5.4
 
 g_players={}
 g_popups={}
 g_team_stats={}
 g_vehicles={}
-g_spawned_vehicles={}
 g_team_status_dirty=false
 g_player_status_dirty=false
 g_finish_dirty=false
@@ -14,6 +13,7 @@ g_in_countdown=false
 g_pause=false
 g_timer=0
 g_remind_interval=3600
+g_ui_reset_requested=false
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -639,6 +639,11 @@ function onDestroy()
 end
 
 function onTick()
+	if g_ui_reset_requested then
+		g_ui_reset_requested=false
+		renewUiIds()
+	end
+
 	for i=#g_vehicles,1,-1 do
 		updateVehicle(g_vehicles[i])
 	end
@@ -690,19 +695,23 @@ function onTick()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
-	renewUiIds()
+	g_ui_reset_requested=true
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
+	peer_id=peer_id//1|0
 	leave(peer_id)
 	despawnSupply(peer_id)
 end
 
 function onPlayerDie(steam_id, name, peer_id, is_admin, is_auth)
+	peer_id=peer_id//1|0
 	kill(peer_id)
 end
 
 function onButtonPress(vehicle_id, peer_id, button_name)
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	if not peer_id or peer_id<0 then return end
 	local character_id, is_success=server.getPlayerCharacterID(peer_id)
 	if not is_success then return end
@@ -790,26 +799,8 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 end
 
 function onPlayerSit(peer_id, vehicle_id, seat_name)
-	local player=g_players[peer_id]
-	if not player or not player.alive then return end
-
-	local vehicle=registerVehicle(vehicle_id)
-	if vehicle and vehicle.alive then
-		player.vehicle_id=vehicle_id
-	end
-	g_player_status_dirty=true
-end
-
-function onVehicleSpawn(vehicle_id, peer_id, x, y, z, cost)
-	if not peer_id or peer_id<0 then return end
-	-- g_spawned_vehicles[vehicle_id]=peer_id
-end
-
-function onVehicleLoad(vehicle_id)
-	local peer_id=g_spawned_vehicles[vehicle_id]
-	if not peer_id then return end
-
-	g_spawned_vehicles[vehicle_id]=nil
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 
@@ -821,11 +812,13 @@ function onVehicleLoad(vehicle_id)
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
-	g_spawned_vehicles[vehicle_id]=nil
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	unregisterVehicle(vehicle_id)
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
+	vehicle_id=vehicle_id//1|0
 	if not g_in_game then return end
 	if damage_amount<=0 then return end
 
@@ -839,6 +832,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one, two, three, four, five)
+	peer_id=peer_id//1|0
 	if command~='?mm' then return end
 
 	if not one then
@@ -1340,6 +1334,7 @@ function startGame()
 	announce('- Infinitie Electric:'..tostring(settings.infinite_batteries), -1)
 	announce('- Infinitie Fuel:'..tostring(settings.infinite_fuel), -1)
 	announce('- Infinitie Ammo:'..tostring(settings.infinite_ammo), -1)
+	announce('- Player Damage:'..tostring(settings.player_damage), -1)
 	announce('- Disable Weapons:'..tostring(settings.ceasefire), -1)
 end
 
