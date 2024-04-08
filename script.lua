@@ -156,6 +156,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Player Damage',
+		key='player_damage',
+		type='boolean',
+	},
+	{
 		name='Fire extinguisher Volume',
 		key='ext_volume',
 		type='number',
@@ -216,6 +221,7 @@ g_default_savedata={
 	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
 	remind_time		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
 	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
+	player_damage	=property.checkbox('Default Player Damage Enabled', true),
 	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
 	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
 	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
@@ -1358,10 +1364,11 @@ end
 
 function setSettingsToBattle()
 	local tps_enabled=g_savedata.tps_enabled
+	local player_damage=g_savedata.player_damage
 	server.setGameSetting('third_person', tps_enabled)
 	server.setGameSetting('third_person_vehicle', tps_enabled)
 	server.setGameSetting('vehicle_damage', true)
-	server.setGameSetting('player_damage', true)
+	server.setGameSetting('player_damage', player_damage)
 	server.setGameSetting('map_show_players', false)
 	server.setGameSetting('map_show_vehicles', false)
 end
