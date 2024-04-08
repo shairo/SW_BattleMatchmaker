@@ -186,3 +186,5 @@ setコマンドで指定可能なインターバル間隔で残弾数チェッ�
   マシンガン弾薬の自動リロード有効化
 - `?mm set mg_reload_time [チェック間隔(秒)]`<br>
   マシンガン弾薬のチェック間隔設定
+- `?mm set player_damage[true|false]`<br>
+  試合中PlayerDamageを有効にするかどうか
