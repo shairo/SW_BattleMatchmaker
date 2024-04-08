@@ -689,19 +689,24 @@ function onTick()
 end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
+	peer_id=peer_id//1|0
 	renewUiIds()
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
+	peer_id=peer_id//1|0
 	leave(peer_id)
 	despawnSupply(peer_id)
 end
 
 function onPlayerDie(steam_id, name, peer_id, is_admin, is_auth)
+	peer_id=peer_id//1|0
 	kill(peer_id)
 end
 
 function onButtonPress(vehicle_id, peer_id, button_name)
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	if not peer_id or peer_id<0 then return end
 	local character_id, is_success=server.getPlayerCharacterID(peer_id)
 	if not is_success then return end
@@ -789,6 +794,8 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 end
 
 function onPlayerSit(peer_id, vehicle_id, seat_name)
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
 	if not player or not player.alive then return end
 
@@ -800,10 +807,13 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 end
 
 function onVehicleDespawn(vehicle_id, peer_id)
+	vehicle_id=vehicle_id//1|0
+	peer_id=peer_id//1|0
 	unregisterVehicle(vehicle_id)
 end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
+	vehicle_id=vehicle_id//1|0
 	if not g_in_game then return end
 	if damage_amount<=0 then return end
 
@@ -817,6 +827,7 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one, two, three, four, five)
+	peer_id=peer_id//1|0
 	if command~='?mm' then return end
 
 	if not one then
