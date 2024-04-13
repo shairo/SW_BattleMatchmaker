@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.5.4
+-- Version 1.5.5
 
 g_players={}
 g_popups={}
@@ -755,12 +755,11 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 		elseif button_name=='Clear Large Equipment' then
 			server.setCharacterItem(character_id, 1, 0, false)
 		elseif button_name=='Clear Small Equipments' then
-			server.setCharacterItem(character_id, 2, 0, false)
-			server.setCharacterItem(character_id, 3, 0, false)
-			server.setCharacterItem(character_id, 4, 0, false)
-			server.setCharacterItem(character_id, 5, 0, false)
+			for i=2,9 do
+				server.setCharacterItem(character_id, i, 0, false)
+			end
 		elseif button_name=='Clear Outfit' then
-			server.setCharacterItem(character_id, 6, 0, false)
+			server.setCharacterItem(character_id, 10, 0, false)
 		end
 		return
 	end
@@ -798,11 +797,13 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 	announce('Ammo here!', peer_id)
 end
 
-function onPlayerSit(peer_id, vehicle_id, seat_name)
+function onPlayerSit_(peer_id, vehicle_id, seat_name)
 	vehicle_id=vehicle_id//1|0
 	peer_id=peer_id//1|0
 	local player=g_players[peer_id]
-	if not player or not player.alive then return end
+	if not player or not player.alive then
+		return
+	end
 
 	local vehicle=registerVehicle(vehicle_id)
 	if vehicle and vehicle.alive then
@@ -810,6 +811,18 @@ function onPlayerSit(peer_id, vehicle_id, seat_name)
 	end
 	g_player_status_dirty=true
 end
+function onCharacterSit(object_id, vehicle_id, seat_name)
+	local peer_id=findPeerIdByCharacterId(object_id)
+	onPlayerSit_(peer_id, vehicle_id, seat_name)
+end
+function findPeerIdByCharacterId(object_id)
+	for i,p in ipairs(server.getPlayers()) do
+		if object_id==server.getPlayerCharacterID(p.id) then
+			return p.id
+		end
+	end
+end
+
 
 function onVehicleDespawn(vehicle_id, peer_id)
 	vehicle_id=vehicle_id//1|0
@@ -1636,7 +1649,7 @@ function findEmptySlot(object_id, slot)
 	if equipment_id==0 then
 		return slot
 	end
-	if slot>=2 and slot<5 then
+	if slot>=2 and slot<9 then
 		return findEmptySlot(object_id, slot+1)
 	end
 end
