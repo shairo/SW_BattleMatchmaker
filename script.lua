@@ -1156,6 +1156,18 @@ function updateVehicle(vehicle)
 			vehicle.alive=false
 		end
 	end
+
+	if vehicle.damage_in_frame>0 then
+		for peer_id,player in pairs(g_players) do
+			if player.vehicle_id==vehicle_id then
+				local popup=findPopup(player.popup_name)
+				if popup then
+					popup.shake=17
+				end
+			end
+		end
+	end
+
 	vehicle.damage_in_frame=0
 
 	if vehicle.alive then
@@ -1417,6 +1429,9 @@ function registerPopup(name, x, y)
 		name=name,
 		x=x,
 		y=y,
+		ox=0,
+		oy=0,
+		shake=-1,
 		ui_id=server.getMapID(),
 		is_show=false,
 		text='',
@@ -1457,9 +1472,18 @@ end
 
 function updatePopups()
 	for i,popup in ipairs(g_popups) do
+		local shake=popup.shake
+		if shake>=0 then
+			popup.shake=shake-1
+			if shake%4==0 then
+				popup.ox=(math.random()-0.5)*0.002*shake
+				popup.oy=(math.random()-0.5)*0.002*shake
+				popup.is_dirty=true
+			end
+		end
 		if popup.is_dirty then
 			popup.is_dirty=false
-			server.setPopupScreen(-1, popup.ui_id, popup.name, popup.is_show, popup.text, popup.x, popup.y)
+			server.setPopupScreen(-1, popup.ui_id, popup.name, popup.is_show, popup.text, popup.x+popup.ox, popup.y+popup.oy)
 		end
 	end
 end
