@@ -161,6 +161,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Auto standby',
+		key='auto_standby',
+		type='boolean',
+	},
+	{
 		name='Fire extinguisher Volume',
 		key='ext_volume',
 		type='number',
@@ -222,6 +227,7 @@ g_default_savedata={
 	remind_time		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
 	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
 	player_damage	=property.checkbox('Default Player Damage Enabled', true),
+	auto_standby	=property.checkbox('Default Auto Standby', false),
 	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
 	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
 	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
@@ -1364,6 +1370,13 @@ function finishGame()
 		if is_success then
 			server.reviveCharacter(object_id)
 			server.setCharacterData(object_id, 100, false, false)
+		end
+	end
+
+	if g_savedata.auto_standby then
+		for _,p in pairs(g_players) do
+			p.alive=true
+			p.ready=false
 		end
 	end
 
