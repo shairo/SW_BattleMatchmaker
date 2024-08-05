@@ -1262,7 +1262,7 @@ function startCountdown(force, peer_id)
 		return
 	end
 	announce('Countdown start.', -1)
-	g_timer=600
+	g_timer=300
 	g_in_countdown=true
 	g_player_status_dirty=true
 end
