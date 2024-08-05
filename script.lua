@@ -133,20 +133,8 @@ g_settings={
 		type='boolean',
 	},
 	{
-		name='Countdown Time(sec)',
-		key='cd_sec',
-		type='integer',
-		min=1,
-	},
-	{
 		name='Game Time(min)',
 		key='game_time',
-		type='number',
-		min=1,
-	},
-	{
-		name='Remind interval Time(min)',
-		key='remind_time',
 		type='number',
 		min=1,
 	},
@@ -164,24 +152,6 @@ g_settings={
 		name='Auto standby',
 		key='auto_standby',
 		type='boolean',
-	},
-	{
-		name='Fire extinguisher Volume',
-		key='ext_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Welding torch Volume',
-		key='torch_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Under water welder Volume',
-		key='welder_volume',
-		type='number',
-		min=1, max=100,
 	},
 	{
 		name='Auto vehicle cleanup',
@@ -211,31 +181,26 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider('Default Vehicle HP', 100, 5000, 100, 2000),
-	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
+	vehicle_hp		=property.slider("Default Vehicle HP", 100, 5000, 100, 2000),
+	vehicle_class	=property.checkbox("Vehicle class Enabled", true),
 	max_damage		=1000,
-	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
+	ammo_supply		=property.checkbox("Default Ammo supply Enabled", true),
 	ammo_mg			=-1,
 	ammo_la			=-1,
 	ammo_ra			=-1,
 	ammo_ha			=-1,
 	ammo_bs			=-1,
 	ammo_as			=-1,
-	order_enabled	=property.checkbox('Default Order Command Enabled', true),
-	cd_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
-	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
-	remind_time		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
-	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
-	player_damage	=property.checkbox('Default Player Damage Enabled', true),
-	auto_standby	=property.checkbox('Default Auto Standby', false),
-	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
-	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
-	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
-	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
+	order_enabled	=property.checkbox("Default Order Command Enabled", true),
+	game_time		=property.slider("Default Game time (min)", 1, 60, 1, 20),
+	tps_enabled		=property.checkbox("Default Third Person Enabled", false),
+	player_damage	=property.checkbox("Default Player Damage Enabled", true),
+	auto_standby	=property.checkbox("Default Auto Standby", false),
+	gc_vehicle		=property.checkbox("Default Auto vehicle cleanup", false),
 	supply_vehicles	={},
 	flag_vehicles	={},
-	mg_auto_reload	=property.checkbox('Default MG Auto reloading', true),
-	mg_reload_time	=property.slider('Default MG Auto reloading interval (sec)', 1, 60, 1, 20),
+	mg_auto_reload	=property.checkbox("Default MG Auto reloading", true),
+	mg_reload_time	=property.slider("Default MG Auto reloading interval (sec)", 1, 60, 1, 20),
 }
 
 g_mag_names={}
@@ -739,13 +704,6 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 			if not slot then
 				announce('Inventory is full.', peer_id)
 				return
-			end
-			if equipment_id==10 then
-				v2=v2*g_savedata.ext_volume*0.01
-			elseif equipment_id==27 then
-				v2=v2*g_savedata.torch_volume*0.01
-			elseif equipment_id==26 then
-				v2=v2*g_savedata.welder_volume*0.01
 			end
 			server.setCharacterItem(character_id, slot, equipment_id, false, v1, v2)
 		elseif button_name=='Join RED' then
@@ -1287,7 +1245,7 @@ function startCountdown(force, peer_id)
 		return
 	end
 	announce('Countdown start.', -1)
-	g_timer=g_savedata.cd_sec*60//1|0
+	g_timer=600
 	g_in_countdown=true
 	g_player_status_dirty=true
 end
@@ -1339,7 +1297,7 @@ function startGame()
 	g_pause=false
 	g_player_status_dirty=true
 	g_timer=g_savedata.game_time*60*60//1|0
-	g_remind_interval=g_savedata.remind_time*60*60//1|0
+	g_remind_interval=g_timer//4
 
 	for _,player in pairs(g_players) do
 		player.ready=false
