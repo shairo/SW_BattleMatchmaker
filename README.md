@@ -75,10 +75,6 @@ admin権限のあるユーザーはより細かいコマンドオプションが
 
 管理者はjoin/leave/ready/waitコマンドの末尾にpeer_idをつけることで他人をチームに入れたり抜いたりできます。
 
-**現バージョンのStormworksでは、車両テレポートを行うとクライアント側でのみロープが消失します。**
-もし困る場合はあらかじめEquipment Inventoryに格納しておくなどすることで回避できます。
-
-
 ### 管理者用コマンド
 管理者用コマンドの実行にはAdminが必要です。
 
@@ -154,39 +150,31 @@ setコマンドで指定可能なインターバル間隔で残弾数チェッ�
 管理者は `?mm set` コマンドでゲームの設定を変更することができます。
 
 - `?mm set vehicle_hp [HP]`<br>
-  車両の初期HPを設定
+  車両の初期HP(非クラス制時)
 - `?mm set vehicle_class [true|false]`<br>
-  クラス制の有効無効を設定
+  クラス制を有効にする
 - `?mm set max_damage [ダメージ量]`<br>
   1tickに受けられる最大ダメージ量
 - `?mm set ammo_supply [true|false]`<br>
-  弾薬補給を有効にするか設定
+  弾薬補給を有効にする
 - `?mm set ammo_mg/ammo_la/ammo_ra/ammo_ha/ammo_bs/ammo_as [弾薬数]`<br>
-  各砲タイプ毎の弾薬補給可能回数を設定<br>
+  各砲タイプ毎の弾薬補給可能回数<br>
   `-1` を指定すると無限
-- `?mm set order_enabled [true|false]`<br>
-  車両テレポートの可否を設定
-- `?mm set cd_sec [カウントダウン時間(秒)]`<br>
-  カウントダウン時間を設定
 - `?mm set game_time [ゲーム制限時間(分)]`<br>
-  ゲーム制限時間を設定
-- `?mm set remind_time [残り時間のリマインド間隔(分)]`<br>
-  残り時間のリマインド間隔を設定
+  ゲーム制限時間
+- `?mm set order_enabled [true|false]`<br>
+  試合中に車両テレポートを許可する
 - `?mm set tps_enabled [true|false]`<br>
-  試合中に三人称視点を許可するかを設定
-- `?mm set ext_volume [容量(%)]`<br>
-  消化器の初期容量設定
-- `?mm set torch_volume [容量(%)]`<br>
-  修理トーチの初期容量設定
-- `?mm set welder_volume [容量(%)]`<br>
-  水中トーチの初期容量設定
-- `?mm set gc_vehicle [true|false]`<br>
-  撃破車両の自動削除設定
-- `?mm set mg_auto_reload [true|false]`<br>
-  マシンガン弾薬の自動リロード有効化
-- `?mm set mg_reload_time [チェック間隔(秒)]`<br>
-  マシンガン弾薬のチェック間隔設定
+  試合中に三人称視点を許可する
 - `?mm set player_damage [true|false]`<br>
-  試合中PlayerDamageを有効にするかどうか
+  試合中にPlayerDamageを有効にする
+- `?mm set gc_vehicle [true|false]`<br>
+  撃破車両を自動削除する
+- `?mm set mg_auto_reload [true|false]`<br>
+  マシンガン弾薬の自動リロードを有効にする
+- `?mm set mg_reload_time [チェック間隔(秒)]`<br>
+  マシンガン弾薬のチェック間隔
 - `?mm set auto_standby [true|false]`<br>
   試合終了後にプレイヤー全員をWait状態にする
+- `?mm set auto_auth [true|false]`<br>
+  プレイヤー参加時に自動でadd authする
