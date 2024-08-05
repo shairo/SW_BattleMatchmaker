@@ -181,26 +181,26 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider('Default Vehicle HP', 100, 5000, 100, 2000),
-	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
+	vehicle_hp		=property.slider("Default Vehicle HP", 100, 5000, 100, 2000),
+	vehicle_class	=property.checkbox("Vehicle class Enabled", true),
 	max_damage		=1000,
-	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
+	ammo_supply		=property.checkbox("Default Ammo supply Enabled", true),
 	ammo_mg			=-1,
 	ammo_la			=-1,
 	ammo_ra			=-1,
 	ammo_ha			=-1,
 	ammo_bs			=-1,
 	ammo_as			=-1,
-	order_enabled	=property.checkbox('Default Order Command Enabled', true),
-	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
-	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
-	player_damage	=property.checkbox('Default Player Damage Enabled', true),
-	auto_standby	=property.checkbox('Default Auto Standby', false),
-	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
+	order_enabled	=property.checkbox("Default Order Command Enabled", true),
+	game_time		=property.slider("Default Game time (min)", 1, 60, 1, 20),
+	tps_enabled		=property.checkbox("Default Third Person Enabled", false),
+	player_damage	=property.checkbox("Default Player Damage Enabled", true),
+	auto_standby	=property.checkbox("Default Auto Standby", false),
+	gc_vehicle		=property.checkbox("Default Auto vehicle cleanup", false),
 	supply_vehicles	={},
 	flag_vehicles	={},
-	mg_auto_reload	=property.checkbox('Default MG Auto reloading', true),
-	mg_reload_time	=property.slider('Default MG Auto reloading interval (sec)', 1, 60, 1, 20),
+	mg_auto_reload	=property.checkbox("Default MG Auto reloading", true),
+	mg_reload_time	=property.slider("Default MG Auto reloading interval (sec)", 1, 60, 1, 20),
 }
 
 g_mag_names={}
