@@ -818,19 +818,19 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 	end
 end
 
-function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one, two, three, four, five)
+function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_command, ...)
 	peer_id=peer_id//1|0
 	if command~='?mm' then return end
 
-	if not one then
+	if not sub_command or sub_command=='' then
 		showHelp(peer_id, is_admin, is_auth)
 		showSettings(peer_id)
 		return
 	end
 
-	local command_define=findCommand(one)
+	local command_define=findCommand(sub_command)
 	if not command_define then
-		announce('Command "'..one..'" not found.', peer_id)
+		announce('Command "'..sub_command..'" not found.', peer_id)
 		return
 	end
 	if not checkAuth(command_define, is_admin, is_auth) then
@@ -838,7 +838,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 		return
 	end
 
-	local args={two, three, four, five}
+	local args={...}
+	for i=#args,1,-1 do
+		if args[i]=='' then args[i]=nil end
+	end
 	if command_define.args and not validateArgs(command_define, args, peer_id) then
 		return
 	end
