@@ -943,14 +943,16 @@ end
 function ready(peer_id)
 	if g_in_game then return end
 	local player=g_players[peer_id]
-	if not player or player.ready then return end
+	if not player then return end
 	if not player.alive then
-		announce('Cannot ready for dead player.', peer_id)
-		return
+		player.alive=true
+		g_player_status_dirty=true
 	end
-	player.ready=true
-	startCountdown()
-	g_player_status_dirty=true
+	if not player.ready then
+		player.ready=true
+		startCountdown()
+		g_player_status_dirty=true
+	end
 end
 
 function readyAll(peer_id)
@@ -967,10 +969,16 @@ end
 function wait(peer_id)
 	if g_in_game then return end
 	local player=g_players[peer_id]
-	if not player or not player.ready then return end
-	player.ready=false
-	stopCountdown()
-	g_player_status_dirty=true
+	if not player then return end
+	if not player.alive then
+		player.alive=true
+		g_player_status_dirty=true
+	end
+	if player.ready then
+		player.ready=false
+		g_player_status_dirty=true
+		stopCountdown()
+	end
 end
 
 -- Vehicle Functions --
