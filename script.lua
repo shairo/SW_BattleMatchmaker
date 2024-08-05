@@ -169,6 +169,11 @@ g_settings={
 		type='number',
 		min=1,
 	},
+	{
+		name='Auto auth',
+		key='auto_auth',
+		type='boolean',
+	},
 }
 
 g_default_teams={
@@ -201,6 +206,7 @@ g_default_savedata={
 	flag_vehicles	={},
 	mg_auto_reload	=property.checkbox("MG Auto reloading", true),
 	mg_reload_time	=property.slider("MG Auto reloading interval (sec)", 1, 60, 1, 20),
+	auto_auth		=property.checkbox("Auto Auth", false),
 }
 
 g_mag_names={}
@@ -663,6 +669,10 @@ end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	g_ui_reset_requested=true
+
+	if not is_auth and g_savedata.auto_auth then
+		server.addAuth(peer_id)
+	end
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
