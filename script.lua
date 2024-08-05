@@ -166,24 +166,6 @@ g_settings={
 		type='boolean',
 	},
 	{
-		name='Fire extinguisher Volume',
-		key='ext_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Welding torch Volume',
-		key='torch_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Under water welder Volume',
-		key='welder_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
 		name='Auto vehicle cleanup',
 		key='gc_vehicle',
 		type='boolean',
@@ -228,9 +210,6 @@ g_default_savedata={
 	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
 	player_damage	=property.checkbox('Default Player Damage Enabled', true),
 	auto_standby	=property.checkbox('Default Auto Standby', false),
-	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
-	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
-	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
 	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
 	supply_vehicles	={},
 	flag_vehicles	={},
@@ -739,13 +718,6 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 			if not slot then
 				announce('Inventory is full.', peer_id)
 				return
-			end
-			if equipment_id==10 then
-				v2=v2*g_savedata.ext_volume*0.01
-			elseif equipment_id==27 then
-				v2=v2*g_savedata.torch_volume*0.01
-			elseif equipment_id==26 then
-				v2=v2*g_savedata.welder_volume*0.01
 			end
 			server.setCharacterItem(character_id, slot, equipment_id, false, v1, v2)
 		elseif button_name=='Join RED' then
