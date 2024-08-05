@@ -91,6 +91,8 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   制限時間を追加
 - `?mm shuffle [チーム数(2-4)]`<br>
   ランダムにチーム分け
+- `?mm dismiss [チーム名]`<br>
+  チームを解散
 - `?mm reset`<br>
   状態をすべてリセット
 - `?mm clear_supply`<br>
