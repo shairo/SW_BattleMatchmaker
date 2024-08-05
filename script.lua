@@ -276,17 +276,6 @@ g_commands={
 		},
 	},
 	{
-		name='ready_all',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth)
-			if g_in_game then
-				announce('Cannot ready after game start.', peer_id)
-				return
-			end
-			readyAll()
-		end,
-	},
-	{
 		name='wait',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
@@ -330,16 +319,21 @@ g_commands={
 	},
 	{
 		name='start',
-		auth=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth)
-			startCountdown(true, peer_id)
+			readyAll(peer_id)
 		end,
 	},
 	{
-		name='stop',
-		auth=true,
+		name='abort',
+		admin=true,
 		action=function(peer_id, is_admin, is_auth)
-			stopCountdown()
+			if g_in_countdown then
+				stopCountdown()
+			elseif g_in_game then
+				finishGame()
+				notify('Game Aborted', 'Game has been aborted by admin.', 6, -1)
+			end
 		end,
 	},
 	{
@@ -959,18 +953,15 @@ function ready(peer_id)
 	g_player_status_dirty=true
 end
 
-function readyAll()
-	local dirty=false
+function readyAll(peer_id)
+	if g_in_game then return end
 	for peer_id,player in pairs(g_players) do
 		if player.alive and not player.ready then
 			player.ready=true
-			dirty=true
 		end
 	end
-	if dirty then
-		startCountdown()
-		g_player_status_dirty=true
-	end
+	startCountdown(true, peer_id)
+	g_player_status_dirty=true
 end
 
 function wait(peer_id)
