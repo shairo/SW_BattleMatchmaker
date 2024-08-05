@@ -128,23 +128,23 @@ g_settings={
 		min=-1,
 	},
 	{
-		name='Order Command Enabled',
-		key='order_enabled',
-		type='boolean',
-	},
-	{
-		name='Game Time(min)',
+		name='Game Time (min)',
 		key='game_time',
 		type='number',
 		min=1,
 	},
 	{
-		name='TPS Enabled',
+		name='Order Command Enabled (in battle)',
+		key='order_enabled',
+		type='boolean',
+	},
+	{
+		name='TPS Enabled (in battle)',
 		key='tps_enabled',
 		type='boolean',
 	},
 	{
-		name='Player Damage',
+		name='Player Damage (in battle)',
 		key='player_damage',
 		type='boolean',
 	},
@@ -191,11 +191,11 @@ g_default_savedata={
 	ammo_ha			=-1,
 	ammo_bs			=-1,
 	ammo_as			=-1,
-	order_enabled	=property.checkbox("Order Command Enabled", true),
 	game_time		=property.slider("Game time (min)", 1, 60, 1, 20),
-	tps_enabled		=property.checkbox("Third Person Enabled", false),
-	player_damage	=property.checkbox("Player Damage Enabled", true),
-	auto_standby	=property.checkbox("Auto Standby", false),
+	order_enabled	=property.checkbox("Order Command Enabled (in battle)", false),
+	tps_enabled		=property.checkbox("Third Person Enabled (in battle)", true),
+	player_damage	=property.checkbox("Player Damage Enabled (in battle)", true),
+	auto_standby	=property.checkbox("Auto Standby after battle", false),
 	gc_vehicle		=property.checkbox("Auto vehicle cleanup", false),
 	supply_vehicles	={},
 	flag_vehicles	={},
@@ -299,12 +299,8 @@ g_commands={
 		name='order',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			if g_in_game then
+			if g_in_game and not g_pause and not g_savedata.order_enabled then
 				announce('Cannot order after game start.', peer_id)
-				return
-			end
-			if not g_savedata.order_enabled then
-				announce('Order command is not available.', peer_id)
 				return
 			end
 			local player=g_players[peer_id]
