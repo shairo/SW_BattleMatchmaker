@@ -501,6 +501,16 @@ g_commands={
 			{name='value', type='string', require=false},
 		},
 	},
+	{
+		name='dismiss',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, team_name)
+			dismiss(team_name, peer_id)
+		end,
+		args={
+			{name='team_name', type='string', require=true},
+		},
+	},
 }
 
 function findCommand(command)
@@ -913,6 +923,29 @@ function shuffle(team_count, exec_peer_id)
 	stopCountdown()
 	g_team_status_dirty=true
 	g_player_status_dirty=true
+end
+
+function dismiss(team, peer_id)
+	if g_in_game or g_in_countdown then return end
+
+	local remove_peer_ids={}
+	for peer_id,p in pairs(g_players) do
+		if p.team==team then
+			unregisterPopup(p.popup_name)
+			table.insert(remove_peer_ids, peer_id)
+		end
+	end
+
+	if #remove_peer_ids>0 then
+		for i=1,#remove_peer_ids do
+			g_players[remove_peer_ids[i]]=nil
+		end
+		g_team_status_dirty=true
+		g_player_status_dirty=true
+		announce('Team '..team..' dismissed.', peer_id)
+	else
+		announce('Team '..team..' not found.', peer_id)
+	end
 end
 
 function kill(peer_id)
