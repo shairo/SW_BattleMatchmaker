@@ -1036,6 +1036,7 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
+		name=data.name=='' and 'Vehicle' or data.name,
 	}
 
 	local vehicle_hp
@@ -1214,22 +1215,19 @@ end
 
 function updatePlayerStatus()
 	for _,player in pairs(g_players) do
-		local hp=nil
+		local vehicle
 		if player.vehicle_id>=0 then
-			local vehicle=findVehicle(player.vehicle_id)
-			if vehicle then
-				hp=vehicle.hp
-			end
+			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp))
+		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,vehicle))
 	end
 end
 
-function playerToString(name, alive, ready, hp)
+function playerToString(name, alive, ready, vehicle)
 	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
-	local hp_text=hp and string.format('\nHP:%.0f',hp) or ''
-	return name..'\nStat:'..stat_text..hp_text
+	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.name,vehicle.hp) or ''
+	return name..'\nStat:'..stat_text..vehicle_text
 end
 
 function startCountdown(force, peer_id)
