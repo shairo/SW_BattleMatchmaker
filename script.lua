@@ -860,7 +860,7 @@ function join(peer_id, team, force)
 		alive=true,
 		ready=g_in_game,
 		vehicle_id=-1,
-		popup_name='player_status_'..peer_id,
+		popup_name='player_status_'..(peer_id//1|0),
 	}
 	g_players[peer_id]=player
 
