@@ -131,15 +131,6 @@ admin権限のあるユーザーはより細かいコマンドオプションが
 | Battle Cannon      |     | BS_K    | BS_HE          | BS_F          | BS_AP          | BS_I       |
 | Artillery Cannon   |     |         | AS_HE          | AS_F          | AS_AP          |            |
 
-### MG弾薬の自動リロード
-MGのマガジンパーツの名前を `magazine_1` `magazine_2` ...と設定することで自動リロードの対象になります。
-数字は必ず1から始まる連番の数字である必要があり、10まで対応しています。
-**Stormworksの仕様上、スポーン時の弾薬設定がUnloadedの場合は弾が補充されない点に注意してください。**
-
-setコマンドで指定可能なインターバル間隔で残弾数チェックが行われ、残弾のないマガジンは**次のチェックのタイミング**で弾薬が補充されます。
-また1回のチェックで補充されるマガジンは一つだけです。
-
-補充可能回数はボタンによる弾薬補給可能回数と共有されます。
 
 ## 装備品類の呼び出し
 `?mm supply` で準備用の装備品類を呼び出せます。
@@ -175,10 +166,6 @@ setコマンドで指定可能なインターバル間隔で残弾数チェッ�
   試合中にPlayerDamageを有効にする
 - `?mm set gc_vehicle [true|false]`<br>
   撃破車両を自動削除する
-- `?mm set mg_auto_reload [true|false]`<br>
-  マシンガン弾薬の自動リロードを有効にする
-- `?mm set mg_reload_time [チェック間隔(秒)]`<br>
-  マシンガン弾薬のチェック間隔
 - `?mm set auto_standby [true|false]`<br>
   試合終了後にプレイヤー全員をWait状態にする
 - `?mm set auto_auth [true|false]`<br>
