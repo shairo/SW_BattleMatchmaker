@@ -164,6 +164,8 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   試合中に三人称視点を許可する
 - `?mm set player_damage [true|false]`<br>
   試合中にPlayerDamageを有効にする
+- `?mm set show_friend [true|false]`<br>
+  マップに味方の位置を表示する
 - `?mm set gc_vehicle [true|false]`<br>
   撃破車両を自動削除する
 - `?mm set auto_standby [true|false]`<br>

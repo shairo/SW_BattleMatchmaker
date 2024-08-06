@@ -149,6 +149,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Show Friends on map',
+		key='show_friends',
+		type='boolean',
+	},
+	{
 		name='Auto standby',
 		key='auto_standby',
 		type='boolean',
@@ -189,6 +194,7 @@ g_default_savedata={
 	order_enabled	=property.checkbox("Order Command Enabled (in battle)", false),
 	tps_enabled		=property.checkbox("Third Person Enabled (in battle)", true),
 	player_damage	=property.checkbox("Player Damage Enabled (in battle)", true),
+	show_friends	=property.checkbox("Show Friends on map", true),
 	auto_standby	=property.checkbox("Auto Standby after battle", false),
 	gc_vehicle		=property.checkbox("Auto vehicle cleanup", false),
 	supply_vehicles	={},
@@ -653,6 +659,7 @@ function onTick()
 	if g_player_status_dirty then
 		g_player_status_dirty=false
 		updatePlayerStatus()
+		updatePlayerMapObject()
 	end
 
 	updatePopups()
@@ -1474,6 +1481,34 @@ function renewUiIds()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
 			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
+		end
+	end
+
+	updatePlayerMapObject()
+end
+
+function updatePlayerMapObject()
+	local sv_players=server.getPlayers()
+
+	for peer_id,player in pairs(g_players) do
+		local ui_id=findPopup(player.popup_name).ui_id
+		local r,g,b,a=getColor(player.team:lower())
+		local vehicle=findVehicle(player.vehicle_id)
+		local object_id=server.getPlayerCharacterID(peer_id)
+
+		server.removeMapObject(-1, ui_id)
+
+		if g_savedata.show_friends then
+			for i,sv_player in ipairs(sv_players) do
+				local other=g_players[sv_player.id]
+				if not other or other.team==player.team then
+					if vehicle then
+						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a)
+					else
+						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a)
+					end
+				end
+			end
 		end
 	end
 end
