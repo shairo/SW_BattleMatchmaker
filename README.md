@@ -32,7 +32,11 @@ joinコマンドでプレイヤーがチームに所属すると、状態が画�
 参加者が全員Ready状態になると試合が始まります。
 
 #### 5. 試合終了
-管理者が `?mm reset` するか、全員いちどチームを抜けるかしてリセット
+生存者がいるチームが一つ以下になると試合終了します。
+管理者が `?mm abort` で試合を中止することもできます。
+
+プレイヤーのDead状態は `?mm wait` や `?mm join` などでリセットできます。
+また管理者が `?mm reset` するとすべてのチームを解散します。
 
 ### 管理者向けTips
 admin権限のあるユーザーはより細かいコマンドオプションが使えます。
@@ -40,6 +44,7 @@ admin権限のあるユーザーはより細かいコマンドオプションが
 - `?mm flag [名前]` で今いる場所に旗を立てることができます。旗はマップから確認できるので、スタート地点を指定するのに使えます
 - `?mm join` などのコマンドは、末尾にpeer_idを指定することで他人を操作できます
 - `?mm shuffle [チーム数(2-4)]` でjoin済プレイヤーを適当にチーム分けできます
+- 全員readyしていなくても `?mm start` で試合を開始できます
 - HP固定にしたい場合は `?mm set vehicle_class false` でクラス制を無効にします
 
 ## コマンド
@@ -64,10 +69,6 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   自分を死亡状態に設定（自殺）
 - `?mm order`<br>
   車両をプレイヤーの位置にテレポートさせる
-- `?mm start`<br>
-  試合開始前カウントダウンを再開
-- `?mm stop`<br>
-  試合開始前カウントダウンを中断
 - `?mm supply`<br>
   準備用の装備品類を設置
 - `?mm delete_supply`<br>
@@ -75,15 +76,13 @@ admin権限のあるユーザーはより細かいコマンドオプションが
 
 管理者はjoin/leave/ready/waitコマンドの末尾にpeer_idをつけることで他人をチームに入れたり抜いたりできます。
 
-**現バージョンのStormworksでは、車両テレポートを行うとクライアント側でのみロープが消失します。**
-もし困る場合はあらかじめEquipment Inventoryに格納しておくなどすることで回避できます。
-
-
 ### 管理者用コマンド
 管理者用コマンドの実行にはAdminが必要です。
 
-- `?mm ready_all`<br>
-  join済のユーザーを全員readyする
+- `?mm start`<br>
+  join済のユーザーを全員readyして試合開始
+- `?mm abort`<br>
+  試合を中止
 - `?mm pause`<br>
   制限時間のタイマーを一時停止
 - `?mm resume`<br>
@@ -92,6 +91,8 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   制限時間を追加
 - `?mm shuffle [チーム数(2-4)]`<br>
   ランダムにチーム分け
+- `?mm dismiss [チーム名]`<br>
+  チームを解散
 - `?mm reset`<br>
   状態をすべてリセット
 - `?mm clear_supply`<br>
@@ -130,15 +131,6 @@ admin権限のあるユーザーはより細かいコマンドオプションが
 | Battle Cannon      |     | BS_K    | BS_HE          | BS_F          | BS_AP          | BS_I       |
 | Artillery Cannon   |     |         | AS_HE          | AS_F          | AS_AP          |            |
 
-### MG弾薬の自動リロード
-MGのマガジンパーツの名前を `magazine_1` `magazine_2` ...と設定することで自動リロードの対象になります。
-数字は必ず1から始まる連番の数字である必要があり、10まで対応しています。
-**Stormworksの仕様上、スポーン時の弾薬設定がUnloadedの場合は弾が補充されない点に注意してください。**
-
-setコマンドで指定可能なインターバル間隔で残弾数チェックが行われ、残弾のないマガジンは**次のチェックのタイミング**で弾薬が補充されます。
-また1回のチェックで補充されるマガジンは一つだけです。
-
-補充可能回数はボタンによる弾薬補給可能回数と共有されます。
 
 ## 装備品類の呼び出し
 `?mm supply` で準備用の装備品類を呼び出せます。
@@ -154,39 +146,31 @@ setコマンドで指定可能なインターバル間隔で残弾数チェッ�
 管理者は `?mm set` コマンドでゲームの設定を変更することができます。
 
 - `?mm set vehicle_hp [HP]`<br>
-  車両の初期HPを設定
+  車両の初期HP(非クラス制時)
 - `?mm set vehicle_class [true|false]`<br>
-  クラス制の有効無効を設定
+  クラス制を有効にする
 - `?mm set max_damage [ダメージ量]`<br>
   1tickに受けられる最大ダメージ量
 - `?mm set ammo_supply [true|false]`<br>
-  弾薬補給を有効にするか設定
+  弾薬補給を有効にする
 - `?mm set ammo_mg/ammo_la/ammo_ra/ammo_ha/ammo_bs/ammo_as [弾薬数]`<br>
-  各砲タイプ毎の弾薬補給可能回数を設定<br>
+  各砲タイプ毎の弾薬補給可能回数<br>
   `-1` を指定すると無限
-- `?mm set order_enabled [true|false]`<br>
-  車両テレポートの可否を設定
-- `?mm set cd_sec [カウントダウン時間(秒)]`<br>
-  カウントダウン時間を設定
 - `?mm set game_time [ゲーム制限時間(分)]`<br>
-  ゲーム制限時間を設定
-- `?mm set remind_time [残り時間のリマインド間隔(分)]`<br>
-  残り時間のリマインド間隔を設定
+  ゲーム制限時間
+- `?mm set order_enabled [true|false]`<br>
+  試合中に車両テレポートを許可する
 - `?mm set tps_enabled [true|false]`<br>
-  試合中に三人称視点を許可するかを設定
-- `?mm set ext_volume [容量(%)]`<br>
-  消化器の初期容量設定
-- `?mm set torch_volume [容量(%)]`<br>
-  修理トーチの初期容量設定
-- `?mm set welder_volume [容量(%)]`<br>
-  水中トーチの初期容量設定
-- `?mm set gc_vehicle [true|false]`<br>
-  撃破車両の自動削除設定
-- `?mm set mg_auto_reload [true|false]`<br>
-  マシンガン弾薬の自動リロード有効化
-- `?mm set mg_reload_time [チェック間隔(秒)]`<br>
-  マシンガン弾薬のチェック間隔設定
+  試合中に三人称視点を許可する
 - `?mm set player_damage [true|false]`<br>
-  試合中PlayerDamageを有効にするかどうか
+  試合中にPlayerDamageを有効にする
+- `?mm set show_friend [true|false]`<br>
+  マップに味方の位置を表示する
+- `?mm set gc_vehicle [true|false]`<br>
+  撃破車両を自動削除する
 - `?mm set auto_standby [true|false]`<br>
   試合終了後にプレイヤー全員をWait状態にする
+- `?mm set auto_auth [true|false]`<br>
+  プレイヤー参加時に自動でadd authする
+- `?mm set sunk_depth [水深(m)]`<br>
+  水没判定とする深度

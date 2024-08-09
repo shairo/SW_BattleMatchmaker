@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.5.5
+-- Version 1.6.0
 
 g_players={}
 g_popups={}
@@ -128,36 +128,29 @@ g_settings={
 		min=-1,
 	},
 	{
-		name='Order Command Enabled',
-		key='order_enabled',
-		type='boolean',
-	},
-	{
-		name='Countdown Time(sec)',
-		key='cd_sec',
-		type='integer',
-		min=1,
-	},
-	{
-		name='Game Time(min)',
+		name='Game Time (min)',
 		key='game_time',
 		type='number',
 		min=1,
 	},
 	{
-		name='Remind interval Time(min)',
-		key='remind_time',
-		type='number',
-		min=1,
+		name='Order Command Enabled (in battle)',
+		key='order_enabled',
+		type='boolean',
 	},
 	{
-		name='TPS Enabled',
+		name='TPS Enabled (in battle)',
 		key='tps_enabled',
 		type='boolean',
 	},
 	{
-		name='Player Damage',
+		name='Player Damage (in battle)',
 		key='player_damage',
+		type='boolean',
+	},
+	{
+		name='Show Friends on map',
+		key='show_friends',
 		type='boolean',
 	},
 	{
@@ -166,38 +159,20 @@ g_settings={
 		type='boolean',
 	},
 	{
-		name='Fire extinguisher Volume',
-		key='ext_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Welding torch Volume',
-		key='torch_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
-		name='Under water welder Volume',
-		key='welder_volume',
-		type='number',
-		min=1, max=100,
-	},
-	{
 		name='Auto vehicle cleanup',
 		key='gc_vehicle',
 		type='boolean',
 	},
 	{
-		name='MG Auto reloading',
-		key='mg_auto_reload',
+		name='Auto auth',
+		key='auto_auth',
 		type='boolean',
 	},
 	{
-		name='MG Auto reloading interval (sec)',
-		key='mg_reload_time',
-		type='number',
-		min=1,
+		name='Sunk Depth',
+		key='sunk_depth',
+		type='integer',
+		min=0,
 	},
 }
 
@@ -211,31 +186,27 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider('Default Vehicle HP', 100, 5000, 100, 2000),
-	vehicle_class	=property.checkbox('Vehicle class Enabled', true),
+	vehicle_hp		=property.slider("Vehicle HP", 100, 5000, 100, 2000),
+	vehicle_class	=property.checkbox("Vehicle class Enabled", true),
 	max_damage		=1000,
-	ammo_supply		=property.checkbox('Default Ammo supply Enabled', true),
+	ammo_supply		=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg			=-1,
 	ammo_la			=-1,
 	ammo_ra			=-1,
 	ammo_ha			=-1,
 	ammo_bs			=-1,
 	ammo_as			=-1,
-	order_enabled	=property.checkbox('Default Order Command Enabled', true),
-	cd_sec			=property.slider('Default Countdown time (sec)', 5, 60, 1, 10),
-	game_time		=property.slider('Default Game time (min)', 1, 60, 1, 20),
-	remind_time		=property.slider('Default Remind time (min)', 1, 10, 1, 1),
-	tps_enabled		=property.checkbox('Default Third Person Enabled', false),
-	player_damage	=property.checkbox('Default Player Damage Enabled', true),
-	auto_standby	=property.checkbox('Default Auto Standby', false),
-	ext_volume		=property.slider('Default Extinguisher Volume (%)', 1, 100, 1, 100),
-	torch_volume	=property.slider('Default Torch Volume (%)', 1, 100, 1, 100),
-	welder_volume	=property.slider('Default Welder Volume (%)', 1, 100, 1, 100),
-	gc_vehicle		=property.checkbox('Default Auto vehicle cleanup', false),
+	game_time		=property.slider("Game time (min)", 1, 60, 1, 20),
+	order_enabled	=property.checkbox("Order Command Enabled (in battle)", false),
+	tps_enabled		=property.checkbox("Third Person Enabled (in battle)", true),
+	player_damage	=property.checkbox("Player Damage Enabled (in battle)", true),
+	show_friends	=property.checkbox("Show Friends on map", true),
+	auto_standby	=property.checkbox("Auto Standby after battle", false),
+	gc_vehicle		=property.checkbox("Auto vehicle cleanup", false),
 	supply_vehicles	={},
 	flag_vehicles	={},
-	mg_auto_reload	=property.checkbox('Default MG Auto reloading', true),
-	mg_reload_time	=property.slider('Default MG Auto reloading interval (sec)', 1, 60, 1, 20),
+	auto_auth		=property.checkbox("Auto Auth", false),
+	sunk_depth		=property.slider("Sunk Depth", 0, 200, 5, 0),
 }
 
 g_mag_names={}
@@ -305,17 +276,6 @@ g_commands={
 		},
 	},
 	{
-		name='ready_all',
-		admin=true,
-		action=function(peer_id, is_admin, is_auth)
-			if g_in_game then
-				announce('Cannot ready after game start.', peer_id)
-				return
-			end
-			readyAll()
-		end,
-	},
-	{
 		name='wait',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
@@ -334,12 +294,8 @@ g_commands={
 		name='order',
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
-			if g_in_game then
+			if g_in_game and not g_pause and not g_savedata.order_enabled then
 				announce('Cannot order after game start.', peer_id)
-				return
-			end
-			if not g_savedata.order_enabled then
-				announce('Order command is not available.', peer_id)
 				return
 			end
 			local player=g_players[peer_id]
@@ -363,16 +319,21 @@ g_commands={
 	},
 	{
 		name='start',
-		auth=true,
+		admin=true,
 		action=function(peer_id, is_admin, is_auth)
-			startCountdown(true, peer_id)
+			readyAll(peer_id)
 		end,
 	},
 	{
-		name='stop',
-		auth=true,
+		name='abort',
+		admin=true,
 		action=function(peer_id, is_admin, is_auth)
-			stopCountdown()
+			if g_in_countdown then
+				stopCountdown()
+			elseif g_in_game then
+				finishGame()
+				notify('Game Aborted', 'Game has been aborted by admin.', 6, -1)
+			end
 		end,
 	},
 	{
@@ -540,6 +501,16 @@ g_commands={
 			{name='value', type='string', require=false},
 		},
 	},
+	{
+		name='dismiss',
+		admin=true,
+		action=function(peer_id, is_admin, is_auth, team_name)
+			dismiss(team_name, peer_id)
+		end,
+		args={
+			{name='team_name', type='string', require=true},
+		},
+	},
 }
 
 function findCommand(command)
@@ -695,6 +666,7 @@ function onTick()
 	if g_player_status_dirty then
 		g_player_status_dirty=false
 		updatePlayerStatus()
+		updatePlayerMapObject()
 	end
 
 	updatePopups()
@@ -702,6 +674,10 @@ end
 
 function onPlayerJoin(steam_id, name, peer_id, is_admin, is_auth)
 	g_ui_reset_requested=true
+
+	if not is_auth and g_savedata.auto_auth then
+		server.addAuth(peer_id)
+	end
 end
 
 function onPlayerLeave(steam_id, name, peer_id, admin, auth)
@@ -739,13 +715,6 @@ function onButtonPress(vehicle_id, peer_id, button_name)
 			if not slot then
 				announce('Inventory is full.', peer_id)
 				return
-			end
-			if equipment_id==10 then
-				v2=v2*g_savedata.ext_volume*0.01
-			elseif equipment_id==27 then
-				v2=v2*g_savedata.torch_volume*0.01
-			elseif equipment_id==26 then
-				v2=v2*g_savedata.welder_volume*0.01
 			end
 			server.setCharacterItem(character_id, slot, equipment_id, false, v1, v2)
 		elseif button_name=='Join RED' then
@@ -850,19 +819,19 @@ function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, 
 	end
 end
 
-function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one, two, three, four, five)
+function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_command, ...)
 	peer_id=peer_id//1|0
 	if command~='?mm' then return end
 
-	if not one then
+	if not sub_command or sub_command=='' then
 		showHelp(peer_id, is_admin, is_auth)
 		showSettings(peer_id)
 		return
 	end
 
-	local command_define=findCommand(one)
+	local command_define=findCommand(sub_command)
 	if not command_define then
-		announce('Command "'..one..'" not found.', peer_id)
+		announce('Command "'..sub_command..'" not found.', peer_id)
 		return
 	end
 	if not checkAuth(command_define, is_admin, is_auth) then
@@ -870,7 +839,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, one,
 		return
 	end
 
-	local args={two, three, four, five}
+	local args={...}
+	for i=#args,1,-1 do
+		if args[i]=='' then args[i]=nil end
+	end
 	if command_define.args and not validateArgs(command_define, args, peer_id) then
 		return
 	end
@@ -889,7 +861,7 @@ function join(peer_id, team, force)
 		alive=true,
 		ready=g_in_game,
 		vehicle_id=-1,
-		popup_name='player_status_'..peer_id,
+		popup_name='player_status_'..(peer_id//1|0),
 	}
 	g_players[peer_id]=player
 
@@ -957,6 +929,29 @@ function shuffle(team_count, exec_peer_id)
 	g_player_status_dirty=true
 end
 
+function dismiss(team, peer_id)
+	if g_in_game or g_in_countdown then return end
+
+	local remove_peer_ids={}
+	for peer_id,p in pairs(g_players) do
+		if p.team==team then
+			unregisterPopup(p.popup_name)
+			table.insert(remove_peer_ids, peer_id)
+		end
+	end
+
+	if #remove_peer_ids>0 then
+		for i=1,#remove_peer_ids do
+			g_players[remove_peer_ids[i]]=nil
+		end
+		g_team_status_dirty=true
+		g_player_status_dirty=true
+		announce('Team '..team..' dismissed.', peer_id)
+	else
+		announce('Team '..team..' not found.', peer_id)
+	end
+end
+
 function kill(peer_id)
 	if not g_in_game then return end
 	local player=g_players[peer_id]
@@ -985,37 +980,42 @@ end
 function ready(peer_id)
 	if g_in_game then return end
 	local player=g_players[peer_id]
-	if not player or player.ready then return end
+	if not player then return end
 	if not player.alive then
-		announce('Cannot ready for dead player.', peer_id)
-		return
+		player.alive=true
+		g_player_status_dirty=true
 	end
-	player.ready=true
-	startCountdown()
-	g_player_status_dirty=true
-end
-
-function readyAll()
-	local dirty=false
-	for peer_id,player in pairs(g_players) do
-		if player.alive and not player.ready then
-			player.ready=true
-			dirty=true
-		end
-	end
-	if dirty then
+	if not player.ready then
+		player.ready=true
 		startCountdown()
 		g_player_status_dirty=true
 	end
 end
 
+function readyAll(peer_id)
+	if g_in_game then return end
+	for peer_id,player in pairs(g_players) do
+		if player.alive and not player.ready then
+			player.ready=true
+		end
+	end
+	startCountdown(true, peer_id)
+	g_player_status_dirty=true
+end
+
 function wait(peer_id)
 	if g_in_game then return end
 	local player=g_players[peer_id]
-	if not player or not player.ready then return end
-	player.ready=false
-	stopCountdown()
-	g_player_status_dirty=true
+	if not player then return end
+	if not player.alive then
+		player.alive=true
+		g_player_status_dirty=true
+	end
+	if player.ready then
+		player.ready=false
+		g_player_status_dirty=true
+		stopCountdown()
+	end
 end
 
 -- Vehicle Functions --
@@ -1050,8 +1050,7 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
-		reload_check_time=0,
-		reload_mag=nil,
+		name=data.name=='' and 'Vehicle' or data.name,
 	}
 
 	local vehicle_hp
@@ -1120,34 +1119,6 @@ function updateVehicle(vehicle)
 
 	local vehicle_id=vehicle.vehicle_id
 
-	-- auto reloading
-	if not g_savedata.mg_auto_reload then
-	elseif vehicle.reload_check_time<g_savedata.mg_reload_time*60 then
-		vehicle.reload_check_time=vehicle.reload_check_time+1
-	else
-		vehicle.reload_check_time=0
-		local reload_mag=vehicle.reload_mag
-		vehicle.reload_mag=nil
-
-		for i=1,#g_mag_names do
-			local mag_name=g_mag_names[i]
-			local data, is_success=server.getVehicleWeapon(vehicle_id, mag_name)
-			if not is_success then break end
-			if data.capacity==50 and data.ammo==0 then
-				if mag_name==reload_mag then
-					if vehicle.ammo.mg~=0 then
-						if vehicle.ammo.mg>0 then
-							vehicle.ammo.mg=vehicle.ammo.mg-1
-						end
-						server.setVehicleWeapon(vehicle_id, mag_name, 50)
-					end
-				elseif not vehicle.reload_mag then
-					vehicle.reload_mag=mag_name
-				end
-			end
-		end
-	end
-
 	if vehicle.hp and vehicle.damage_in_frame>0 then
 		local damage_in_frame=math.min(vehicle.damage_in_frame, g_savedata.max_damage)//1|0
 		vehicle.hp=math.max(vehicle.hp-damage_in_frame, 0)
@@ -1169,6 +1140,14 @@ function updateVehicle(vehicle)
 	end
 
 	vehicle.damage_in_frame=0
+
+	if g_savedata.sunk_depth>0 then
+		local vehicle_trans=server.getVehiclePos(vehicle_id)
+		local x,y,z=matrix.position(vehicle_trans)
+		if y<-g_savedata.sunk_depth then
+			vehicle.alive=false
+		end
+	end
 
 	if vehicle.alive then
 		return
@@ -1258,22 +1237,19 @@ end
 
 function updatePlayerStatus()
 	for _,player in pairs(g_players) do
-		local hp=nil
+		local vehicle
 		if player.vehicle_id>=0 then
-			local vehicle=findVehicle(player.vehicle_id)
-			if vehicle then
-				hp=vehicle.hp
-			end
+			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,hp))
+		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,vehicle))
 	end
 end
 
-function playerToString(name, alive, ready, hp)
+function playerToString(name, alive, ready, vehicle)
 	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
-	local hp_text=hp and string.format('\nHP:%.0f',hp) or ''
-	return name..'\nStat:'..stat_text..hp_text
+	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.name,vehicle.hp) or ''
+	return name..'\nStat:'..stat_text..vehicle_text
 end
 
 function startCountdown(force, peer_id)
@@ -1299,7 +1275,7 @@ function startCountdown(force, peer_id)
 		return
 	end
 	announce('Countdown start.', -1)
-	g_timer=g_savedata.cd_sec*60//1|0
+	g_timer=300
 	g_in_countdown=true
 	g_player_status_dirty=true
 end
@@ -1351,7 +1327,7 @@ function startGame()
 	g_pause=false
 	g_player_status_dirty=true
 	g_timer=g_savedata.game_time*60*60//1|0
-	g_remind_interval=g_savedata.remind_time*60*60//1|0
+	g_remind_interval=g_timer//4
 
 	for _,player in pairs(g_players) do
 		player.ready=false
@@ -1520,6 +1496,34 @@ function renewUiIds()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
 			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
+		end
+	end
+
+	updatePlayerMapObject()
+end
+
+function updatePlayerMapObject()
+	local sv_players=server.getPlayers()
+
+	for peer_id,player in pairs(g_players) do
+		local ui_id=findPopup(player.popup_name).ui_id
+		local r,g,b,a=getColor(player.team:lower())
+		local vehicle=findVehicle(player.vehicle_id)
+		local object_id=server.getPlayerCharacterID(peer_id)
+
+		server.removeMapObject(-1, ui_id)
+
+		if g_savedata.show_friends and player.alive then
+			for i,sv_player in ipairs(sv_players) do
+				local other=g_players[sv_player.id]
+				if not other or other.team==player.team then
+					if vehicle then
+						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a)
+					else
+						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a)
+					end
+				end
+			end
 		end
 	end
 end
@@ -1706,6 +1710,7 @@ g_colors={
 	yellow	={255,255,0,  255},
 	ylw		={255,255,0,  255},
 	pink	={255,0,  255,255},
+	cyan	={0,  255,255,255},
 	white	={255,255,255,255},
 	black	={0,  0,  0,  255},
 }
