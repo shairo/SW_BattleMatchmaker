@@ -168,6 +168,12 @@ g_settings={
 		key='auto_auth',
 		type='boolean',
 	},
+	{
+		name='Sunk Depth',
+		key='sunk_depth',
+		type='integer',
+		min=0,
+	},
 }
 
 g_default_teams={
@@ -200,6 +206,7 @@ g_default_savedata={
 	supply_vehicles	={},
 	flag_vehicles	={},
 	auto_auth		=property.checkbox("Auto Auth", false),
+	sunk_depth		=property.slider("Sunk Depth", 0, 200, 5, 0),
 }
 
 g_mag_names={}
@@ -1133,6 +1140,14 @@ function updateVehicle(vehicle)
 	end
 
 	vehicle.damage_in_frame=0
+
+	if g_savedata.sunk_depth>0 then
+		local vehicle_trans=server.getVehiclePos(vehicle_id)
+		local x,y,z=matrix.position(vehicle_trans)
+		if y<-g_savedata.sunk_depth then
+			vehicle.alive=false
+		end
+	end
 
 	if vehicle.alive then
 		return

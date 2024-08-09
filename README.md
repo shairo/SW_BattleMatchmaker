@@ -172,3 +172,5 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   試合終了後にプレイヤー全員をWait状態にする
 - `?mm set auto_auth [true|false]`<br>
   プレイヤー参加時に自動でadd authする
+- `?mm set sunk_depth [水深(m)]`<br>
+  水没判定とする深度
