@@ -1498,7 +1498,7 @@ function updatePlayerMapObject()
 
 		server.removeMapObject(-1, ui_id)
 
-		if g_savedata.show_friends then
+		if g_savedata.show_friends and player.alive then
 			for i,sv_player in ipairs(sv_players) do
 				local other=g_players[sv_player.id]
 				if not other or other.team==player.team then
