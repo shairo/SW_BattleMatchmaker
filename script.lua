@@ -610,7 +610,7 @@ function onCreate(is_world_create)
 	clearFlags()
 
 	registerPopup('countdown', 0, 0.6)
-	registerPopup('game_time', 0.9, -0.9)
+	registerPopup('game_time', -0.9, -0.9)
 
 	setSettingsToStandby()
 end
