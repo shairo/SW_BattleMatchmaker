@@ -144,6 +144,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Nameplate Enabled (in battle)',
+		key='nameplate_enabled',
+		type='boolean',
+	},
+	{
 		name='Player Damage (in battle)',
 		key='player_damage',
 		type='boolean',
@@ -186,27 +191,28 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider("Vehicle HP", 100, 5000, 100, 2000),
-	vehicle_class	=property.checkbox("Vehicle class Enabled", true),
-	max_damage		=1000,
-	ammo_supply		=property.checkbox("Ammo supply Enabled", true),
-	ammo_mg			=-1,
-	ammo_la			=-1,
-	ammo_ra			=-1,
-	ammo_ha			=-1,
-	ammo_bs			=-1,
-	ammo_as			=-1,
-	game_time		=property.slider("Game time (min)", 1, 60, 1, 20),
-	order_enabled	=property.checkbox("Order Command Enabled (in battle)", false),
-	tps_enabled		=property.checkbox("Third Person Enabled (in battle)", true),
-	player_damage	=property.checkbox("Player Damage Enabled (in battle)", true),
-	show_friends	=property.checkbox("Show Friends on map", true),
-	auto_standby	=property.checkbox("Auto Standby after battle", false),
-	gc_vehicle		=property.checkbox("Auto vehicle cleanup", false),
-	supply_vehicles	={},
-	flag_vehicles	={},
-	auto_auth		=property.checkbox("Auto Auth", false),
-	sunk_depth		=property.slider("Sunk Depth", 0, 200, 5, 0),
+	vehicle_hp			=property.slider("Vehicle HP", 100, 5000, 100, 2000),
+	vehicle_class		=property.checkbox("Vehicle class Enabled", true),
+	max_damage			=1000,
+	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
+	ammo_mg				=-1,
+	ammo_la				=-1,
+	ammo_ra				=-1,
+	ammo_ha				=-1,
+	ammo_bs				=-1,
+	ammo_as				=-1,
+	game_time			=property.slider("Game time (min)", 1, 60, 1, 20),
+	order_enabled		=property.checkbox("Order Command Enabled (in battle)", false),
+	tps_enabled			=property.checkbox("Third Person Enabled (in battle)", true),
+	nameplate_enabled	=property.checkbox("Nameplate Enabled (in battle)", true),
+	player_damage		=property.checkbox("Player Damage Enabled (in battle)", true),
+	show_friends		=property.checkbox("Show Friends on map", true),
+	auto_standby		=property.checkbox("Auto Standby after battle", false),
+	gc_vehicle			=property.checkbox("Auto vehicle cleanup", false),
+	supply_vehicles		={},
+	flag_vehicles		={},
+	auto_auth			=property.checkbox("Auto Auth", false),
+	sunk_depth			=property.slider("Sunk Depth", 0, 200, 5, 0),
 }
 
 g_mag_names={}
@@ -1374,12 +1380,11 @@ function finishGame()
 end
 
 function setSettingsToBattle()
-	local tps_enabled=g_savedata.tps_enabled
-	local player_damage=g_savedata.player_damage
-	server.setGameSetting('third_person', tps_enabled)
-	server.setGameSetting('third_person_vehicle', tps_enabled)
+	server.setGameSetting('third_person', g_savedata.tps_enabled)
+	server.setGameSetting('third_person_vehicle', g_savedata.tps_enabled)
+	server.setGameSetting('show_name_plates', g_savedata.nameplate_enabled)
 	server.setGameSetting('vehicle_damage', true)
-	server.setGameSetting('player_damage', player_damage)
+	server.setGameSetting('player_damage', g_savedata.player_damage)
 	server.setGameSetting('map_show_players', false)
 	server.setGameSetting('map_show_vehicles', false)
 end
@@ -1387,6 +1392,7 @@ end
 function setSettingsToStandby()
 	server.setGameSetting('third_person', true)
 	server.setGameSetting('third_person_vehicle', true)
+	server.setGameSetting('show_name_plates', false)
 	server.setGameSetting('vehicle_damage', false)
 	server.setGameSetting('player_damage', false)
 	server.setGameSetting('map_show_players', true)

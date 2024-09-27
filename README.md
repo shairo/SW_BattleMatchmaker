@@ -162,6 +162,8 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   試合中に車両テレポートを許可する
 - `?mm set tps_enabled [true|false]`<br>
   試合中に三人称視点を許可する
+- `?mm set nameplate_enabled [true|false]`<br>
+  試合中にネームプレートを表示する
 - `?mm set player_damage [true|false]`<br>
   試合中にPlayerDamageを有効にする
 - `?mm set show_friends [true|false]`<br>
