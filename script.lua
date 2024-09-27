@@ -633,7 +633,9 @@ function onTick()
 			setPopup('countdown', true, string.format('Start in\n%.0f', sec))
 		else
 			startGame()
-			notify('Game Start', 'Panzer Vor!', 9, -1)
+			local sec=g_timer//60
+			local time_text=string.format('%02.f:%02.f left.', sec//60,sec%60)
+			notify('Game Start', time_text, 9, -1)
 		end
 	end
 	if g_in_game then
