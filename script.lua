@@ -864,7 +864,7 @@ function join(peer_id, team, force)
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
 	local player={
-		name=name,
+		name=trim(name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
@@ -1058,7 +1058,7 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
-		name=data.name=='' and 'Vehicle' or data.name,
+		name=data.name=='' and 'Vehicle' or trim(data.name),
 	}
 
 	local vehicle_hp
@@ -1759,3 +1759,27 @@ function validateArg(arg_define, arg, peer_id)
 	end
 	return value, true
 end
+
+----
+
+function trim(str)
+	local w=0
+	for i=1,#str do
+		w=w+getWidth(str:byte(i))
+		if w>1000 then
+			return str:sub(1,i-1)
+		end
+	end
+	return str
+end
+function getWidth(char_byte)
+	local idx=char_byte-31
+	return idx>0 and idx<=#cwl and cwl[idx] or cwl[1]
+end
+
+cwl={
+	41,40,60,95,85,123,108,34,45,45,81,85,40,48,40,55,85,85,85,85,85,85,85,85,85,85,40,40,85,85,
+	85,64,133,94,94,93,108,82,77,108,109,50,41,92,78,134,112,115,89,115,92,81,82,108,89,137,
+	87,84,85,49,55,49,85,66,86,83,91,71,91,83,51,91,91,38,38,79,38,138,91,89,91,91,61,71,54,91,
+	75,116,78,75,70,56,81,56,85
+}
