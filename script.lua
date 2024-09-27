@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.6.0
+-- Version 1.6.1
 
 g_players={}
 g_popups={}
@@ -144,6 +144,11 @@ g_settings={
 		type='boolean',
 	},
 	{
+		name='Nameplate Enabled (in battle)',
+		key='nameplate_enabled',
+		type='boolean',
+	},
+	{
 		name='Player Damage (in battle)',
 		key='player_damage',
 		type='boolean',
@@ -186,27 +191,28 @@ g_default_teams={
 g_temporary_team='Standby'
 
 g_default_savedata={
-	vehicle_hp		=property.slider("Vehicle HP", 100, 5000, 100, 2000),
-	vehicle_class	=property.checkbox("Vehicle class Enabled", true),
-	max_damage		=1000,
-	ammo_supply		=property.checkbox("Ammo supply Enabled", true),
-	ammo_mg			=-1,
-	ammo_la			=-1,
-	ammo_ra			=-1,
-	ammo_ha			=-1,
-	ammo_bs			=-1,
-	ammo_as			=-1,
-	game_time		=property.slider("Game time (min)", 1, 60, 1, 20),
-	order_enabled	=property.checkbox("Order Command Enabled (in battle)", false),
-	tps_enabled		=property.checkbox("Third Person Enabled (in battle)", true),
-	player_damage	=property.checkbox("Player Damage Enabled (in battle)", true),
-	show_friends	=property.checkbox("Show Friends on map", true),
-	auto_standby	=property.checkbox("Auto Standby after battle", false),
-	gc_vehicle		=property.checkbox("Auto vehicle cleanup", false),
-	supply_vehicles	={},
-	flag_vehicles	={},
-	auto_auth		=property.checkbox("Auto Auth", false),
-	sunk_depth		=property.slider("Sunk Depth", 0, 200, 5, 0),
+	vehicle_hp			=property.slider("Vehicle HP", 100, 5000, 100, 2000),
+	vehicle_class		=property.checkbox("Vehicle class Enabled", true),
+	max_damage			=1000,
+	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
+	ammo_mg				=-1,
+	ammo_la				=-1,
+	ammo_ra				=-1,
+	ammo_ha				=-1,
+	ammo_bs				=-1,
+	ammo_as				=-1,
+	game_time			=property.slider("Game time (min)", 1, 60, 1, 20),
+	order_enabled		=property.checkbox("Order Command Enabled (in battle)", false),
+	tps_enabled			=property.checkbox("Third Person Enabled (in battle)", true),
+	nameplate_enabled	=property.checkbox("Nameplate Enabled (in battle)", true),
+	player_damage		=property.checkbox("Player Damage Enabled (in battle)", true),
+	show_friends		=property.checkbox("Show Friends on map", true),
+	auto_standby		=property.checkbox("Auto Standby after battle", false),
+	gc_vehicle			=property.checkbox("Auto vehicle cleanup", false),
+	supply_vehicles		={},
+	flag_vehicles		={},
+	auto_auth			=property.checkbox("Auto Auth", false),
+	sunk_depth			=property.slider("Sunk Depth", 0, 200, 5, 0),
 }
 
 g_mag_names={}
@@ -604,7 +610,7 @@ function onCreate(is_world_create)
 	clearFlags()
 
 	registerPopup('countdown', 0, 0.6)
-	registerPopup('game_time', 0, 0.9)
+	registerPopup('game_time', -0.9, -0.9)
 
 	setSettingsToStandby()
 end
@@ -633,7 +639,9 @@ function onTick()
 			setPopup('countdown', true, string.format('Start in\n%.0f', sec))
 		else
 			startGame()
-			notify('Game Start', 'Panzer Vor!', 9, -1)
+			local sec=g_timer//60
+			local time_text=string.format('%02.f:%02.f left.', sec//60,sec%60)
+			notify('Game Start', time_text, 9, -1)
 		end
 	end
 	if g_in_game then
@@ -857,6 +865,7 @@ function join(peer_id, team, force)
 	if not is_success then return end
 	local player={
 		name=name,
+		trimmed_name=trim(name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
@@ -1036,6 +1045,7 @@ function registerVehicle(vehicle_id)
 	local data,is_success=server.getVehicleData(vehicle_id)
 	if not is_success then return end
 
+	local name=data.name=='' and 'Vehicle' or data.name
 	vehicle={
 		vehicle_id=vehicle_id,
 		group_id=data.group_id,
@@ -1050,7 +1060,8 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
-		name=data.name=='' and 'Vehicle' or data.name,
+		name=name,
+		trimmed_name=trim(name),
 	}
 
 	local vehicle_hp
@@ -1242,13 +1253,13 @@ function updatePlayerStatus()
 			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,vehicle))
+		setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle))
 	end
 end
 
 function playerToString(name, alive, ready, vehicle)
 	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
-	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.name,vehicle.hp) or ''
+	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.trimmed_name,vehicle.hp) or ''
 	return name..'\nStat:'..stat_text..vehicle_text
 end
 
@@ -1372,12 +1383,11 @@ function finishGame()
 end
 
 function setSettingsToBattle()
-	local tps_enabled=g_savedata.tps_enabled
-	local player_damage=g_savedata.player_damage
-	server.setGameSetting('third_person', tps_enabled)
-	server.setGameSetting('third_person_vehicle', tps_enabled)
+	server.setGameSetting('third_person', g_savedata.tps_enabled)
+	server.setGameSetting('third_person_vehicle', g_savedata.tps_enabled)
+	server.setGameSetting('show_name_plates', g_savedata.nameplate_enabled)
 	server.setGameSetting('vehicle_damage', true)
-	server.setGameSetting('player_damage', player_damage)
+	server.setGameSetting('player_damage', g_savedata.player_damage)
 	server.setGameSetting('map_show_players', false)
 	server.setGameSetting('map_show_vehicles', false)
 end
@@ -1385,6 +1395,7 @@ end
 function setSettingsToStandby()
 	server.setGameSetting('third_person', true)
 	server.setGameSetting('third_person_vehicle', true)
+	server.setGameSetting('show_name_plates', false)
 	server.setGameSetting('vehicle_damage', false)
 	server.setGameSetting('player_damage', false)
 	server.setGameSetting('map_show_players', true)
@@ -1751,3 +1762,27 @@ function validateArg(arg_define, arg, peer_id)
 	end
 	return value, true
 end
+
+----
+
+function trim(str)
+	local w=0
+	for i=1,#str do
+		w=w+getWidth(str:byte(i))
+		if w>1000 then
+			return str:sub(1,i-1)
+		end
+	end
+	return str
+end
+function getWidth(char_byte)
+	local idx=char_byte-31
+	return idx>0 and idx<=#cwl and cwl[idx] or cwl[1]
+end
+
+cwl={
+	41,40,60,95,85,123,108,34,45,45,81,85,40,48,40,55,85,85,85,85,85,85,85,85,85,85,40,40,85,85,
+	85,64,133,94,94,93,108,82,77,108,109,50,41,92,78,134,112,115,89,115,92,81,82,108,89,137,
+	87,84,85,49,55,49,85,66,86,83,91,71,91,83,51,91,91,38,38,79,38,138,91,89,91,91,61,71,54,91,
+	75,116,78,75,70,56,81,56,85
+}
