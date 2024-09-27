@@ -864,7 +864,8 @@ function join(peer_id, team, force)
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
 	local player={
-		name=trim(name),
+		name=name,
+		trimmed_name=trim(name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
@@ -1044,6 +1045,7 @@ function registerVehicle(vehicle_id)
 	local data,is_success=server.getVehicleData(vehicle_id)
 	if not is_success then return end
 
+	local name=data.name=='' and 'Vehicle' or data.name
 	vehicle={
 		vehicle_id=vehicle_id,
 		group_id=data.group_id,
@@ -1058,7 +1060,8 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
-		name=data.name=='' and 'Vehicle' or trim(data.name),
+		name=name,
+		trimmed_name=trim(name),
 	}
 
 	local vehicle_hp
@@ -1250,13 +1253,13 @@ function updatePlayerStatus()
 			vehicle=findVehicle(player.vehicle_id)
 		end
 
-		setPopup(player.popup_name, true, playerToString(player.name,player.alive,player.ready,vehicle))
+		setPopup(player.popup_name, true, playerToString(player.trimmed_name,player.alive,player.ready,vehicle))
 	end
 end
 
 function playerToString(name, alive, ready, vehicle)
 	local stat_text=alive and (g_in_game and 'Alive' or (ready and 'Ready' or 'Wait')) or 'Dead'
-	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.name,vehicle.hp) or ''
+	local vehicle_text=vehicle and string.format('\n%s\nHP:%.0f',vehicle.trimmed_name,vehicle.hp) or ''
 	return name..'\nStat:'..stat_text..vehicle_text
 end
 
