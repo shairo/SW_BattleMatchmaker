@@ -14,6 +14,7 @@ g_pause=false
 g_timer=0
 g_remind_interval=3600
 g_ui_reset_requested=false
+g_flag_radius=300
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -1506,7 +1507,7 @@ function renewUiIds()
 			flag.ui_id=server.getMapID()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
-			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
+			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
 		end
 	end
 
@@ -1597,7 +1598,7 @@ function spawnFlag(peer_id, name)
 		local ui_id=server.getMapID()
 		local x,y,z=matrix.position(vehicle_matrix)
 		local r,g,b,a=getColor(name)
-		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 30, name, r, g, b, a)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
 		g_savedata.flag_vehicles[name]={
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
