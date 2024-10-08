@@ -1,5 +1,5 @@
 -- Battle Matchmaker
--- Version 1.6.1
+-- Version 1.6.2
 
 g_players={}
 g_popups={}
@@ -14,6 +14,7 @@ g_pause=false
 g_timer=0
 g_remind_interval=3600
 g_ui_reset_requested=false
+g_flag_radius=300
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -1123,7 +1124,7 @@ function updateVehicle(vehicle)
 		if vehicle.gc_time>0 then
 			vehicle.gc_time=vehicle.gc_time-1
 		elseif g_savedata.gc_vehicle then
-			server.despawnVehicle(vehicle.vehicle_id, true)
+			server.despawnVehicleGroup(vehicle.group_id, true)
 		end
 		return
 	end
@@ -1237,7 +1238,7 @@ function registerTeamStatus(name)
 	end
 	local popup_name='team_status_'..name
 	registerPopup(popup_name, 0, 0)
-	setPopup(popup_name, true, '* '..name..' *')
+	setPopup(popup_name, true, trim(name))
 	local team_status={
 		name=name,
 		popup_name=popup_name,
@@ -1395,7 +1396,7 @@ end
 function setSettingsToStandby()
 	server.setGameSetting('third_person', true)
 	server.setGameSetting('third_person_vehicle', true)
-	server.setGameSetting('show_name_plates', false)
+	server.setGameSetting('show_name_plates', true)
 	server.setGameSetting('vehicle_damage', false)
 	server.setGameSetting('player_damage', false)
 	server.setGameSetting('map_show_players', true)
@@ -1506,11 +1507,11 @@ function renewUiIds()
 			flag.ui_id=server.getMapID()
 			local x,y,z = matrix.position(vehicle_matrix)
 			local r,g,b,a=getColor(name)
-			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, 30, name, r, g, b, a)
+			server.addMapObject(-1, flag.ui_id, 1, 9, x, z, 0, 0, flag.vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
 		end
 	end
 
-	updatePlayerMapObject()
+	g_player_status_dirty=true
 end
 
 function updatePlayerMapObject()
@@ -1528,10 +1529,11 @@ function updatePlayerMapObject()
 			for i,sv_player in ipairs(sv_players) do
 				local other=g_players[sv_player.id]
 				if not other or other.team==player.team then
+					local a2=sv_player.id==peer_id and a or a//2
 					if vehicle then
-						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a)
+						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a2)
 					else
-						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a)
+						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a2)
 					end
 				end
 			end
@@ -1597,7 +1599,7 @@ function spawnFlag(peer_id, name)
 		local ui_id=server.getMapID()
 		local x,y,z=matrix.position(vehicle_matrix)
 		local r,g,b,a=getColor(name)
-		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, 30, name, r, g, b, a)
+		server.addMapObject(-1, ui_id, 1, 9, x, z, 0, 0, vehicle_id, 0, name, g_flag_radius, name, r, g, b, a)
 		g_savedata.flag_vehicles[name]={
 			vehicle_id=vehicle_id,
 			ui_id=ui_id,
@@ -1707,11 +1709,7 @@ function findEmptySlot(object_id, slot)
 end
 
 function getColor(name)
-	local color=g_colors[name]
-	if color then
-		return table.unpack(color)
-	end
-	return 255,127,39,255
+	return table.unpack(g_colors[name] or g_color_default)
 end
 
 g_colors={
@@ -1722,9 +1720,10 @@ g_colors={
 	ylw		={255,255,0,  255},
 	pink	={255,0,  255,255},
 	cyan	={0,  255,255,255},
-	white	={255,255,255,255},
-	black	={0,  0,  0,  255},
+	white	={225,225,225,255},
+	black	={30, 30, 30, 255},
 }
+g_color_default={255,127,39,255}
 
 function validateArgs(command_define, args, peer_id)
 	if command_define.args then
