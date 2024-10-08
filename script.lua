@@ -1238,7 +1238,7 @@ function registerTeamStatus(name)
 	end
 	local popup_name='team_status_'..name
 	registerPopup(popup_name, 0, 0)
-	setPopup(popup_name, true, '* '..name..' *')
+	setPopup(popup_name, true, trim(name))
 	local team_status={
 		name=name,
 		popup_name=popup_name,
