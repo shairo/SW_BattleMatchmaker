@@ -1511,7 +1511,7 @@ function renewUiIds()
 		end
 	end
 
-	updatePlayerMapObject()
+	g_player_status_dirty=true
 end
 
 function updatePlayerMapObject()
