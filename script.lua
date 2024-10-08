@@ -1395,7 +1395,7 @@ end
 function setSettingsToStandby()
 	server.setGameSetting('third_person', true)
 	server.setGameSetting('third_person_vehicle', true)
-	server.setGameSetting('show_name_plates', false)
+	server.setGameSetting('show_name_plates', true)
 	server.setGameSetting('vehicle_damage', false)
 	server.setGameSetting('player_damage', false)
 	server.setGameSetting('map_show_players', true)
