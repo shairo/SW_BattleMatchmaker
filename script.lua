@@ -1529,10 +1529,11 @@ function updatePlayerMapObject()
 			for i,sv_player in ipairs(sv_players) do
 				local other=g_players[sv_player.id]
 				if not other or other.team==player.team then
+					local a2=sv_player.id==peer_id and a or a//2
 					if vehicle then
-						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a)
+						server.addMapObject(sv_player.id, ui_id, 1, 2, 0, 0, 0, 0, vehicle.vehicle_id, -1, player.name, 0, vehicle.name, r, g, b, a2)
 					else
-						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a)
+						server.addMapObject(sv_player.id, ui_id, 2, 1, 0, 0, 0, 0, -1, object_id, player.name, 0, player.name, r, g, b, a2)
 					end
 				end
 			end
@@ -1708,11 +1709,7 @@ function findEmptySlot(object_id, slot)
 end
 
 function getColor(name)
-	local color=g_colors[name]
-	if color then
-		return table.unpack(color)
-	end
-	return 255,127,39,255
+	return table.unpack(g_colors[name] or g_color_default)
 end
 
 g_colors={
@@ -1723,9 +1720,10 @@ g_colors={
 	ylw		={255,255,0,  255},
 	pink	={255,0,  255,255},
 	cyan	={0,  255,255,255},
-	white	={255,255,255,255},
-	black	={0,  0,  0,  255},
+	white	={225,225,225,255},
+	black	={30, 30, 30, 255},
 }
+g_color_default={255,127,39,255}
 
 function validateArgs(command_define, args, peer_id)
 	if command_define.args then
