@@ -1123,7 +1123,7 @@ function updateVehicle(vehicle)
 		if vehicle.gc_time>0 then
 			vehicle.gc_time=vehicle.gc_time-1
 		elseif g_savedata.gc_vehicle then
-			server.despawnVehicle(vehicle.vehicle_id, true)
+			server.despawnVehicleGroup(vehicle.group_id, true)
 		end
 		return
 	end
