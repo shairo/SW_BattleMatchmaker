@@ -901,13 +901,13 @@ function join(peer_id, team, force)
 		local vehicle=registerVehicle(vehicle_id)
 		if vehicle and vehicle.alive then
 			player.vehicle_id=vehicle_id
-			--webmapAddon
+			--WebMapAddon
 			if g_has_webmap then
 				bindVehicleTeamToWebMap(vehicle_id, team)
 			end
 		end
 	else
-		--webmapAddon
+		--WebMapAddon
 		--not sit
 		--Currently, it does not work because player.vehicle_id = -1 is set.
 		local vehicle=registerVehicle(player.vehicle_id)
@@ -966,7 +966,7 @@ function shuffle(team_count, exec_peer_id)
 		local team=g_default_teams[1+(i-1)%team_count]
 		g_players[peer_id].team=team
 		announce('You joined to '..team..'.', peer_id)
-		--webmapAddon
+		--WebMapAddon
 		if g_has_webmap then
 			local vehicle=findVehicle(g_players[peer_id].vehicle_id)
 			if vehicle and vehicle.alive then
