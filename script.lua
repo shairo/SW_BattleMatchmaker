@@ -15,9 +15,9 @@ g_timer=0
 g_remind_interval=3600
 g_ui_reset_requested=false
 g_flag_radius=300
---WebMapAddon
+-- WebMapAddon
 g_has_webmap=false
-g_webMapBindings={}
+g_webmap_bindings={}
 
 g_ammo_supply_buttons={
 	MG_K={42,50,'mg'},
@@ -618,18 +618,17 @@ function onCreate(is_world_create)
 
 	setSettingsToStandby()
 
-	--WebMapAddonDetectCheck
-	count = server.getAddonCount()
-	for addon_index=0,count-1 do
-		local ADDON_DATA =server.getAddonData(addon_index)
-		local addon_name = string.lower(ADDON_DATA.name)
+	-- WebMapAddonDetectCheck
+	local addon_count = server.getAddonCount()
+	for addon_index=0,addon_count-1 do
+		local addon_data = server.getAddonData(addon_index)
+		local addon_name = string.lower(addon_data.name)
 		if addon_name == 'webmap' then
 			g_has_webmap=true
-			announce('Webmap addon detected!',0)
+			announce('Webmap addon detected!', 0)
 			break
 		end
 	end
-
 end
 
 function onDestroy()
@@ -808,7 +807,7 @@ function onPlayerSit_(peer_id, vehicle_id, seat_name)
 	local vehicle=registerVehicle(vehicle_id)
 	if vehicle and vehicle.alive then
 		player.vehicle_id=vehicle_id
-		--WebMapAddon
+		-- WebMapAddon
 		if g_has_webmap then
 			bindVehicleTeamToWebMap(vehicle_id, player.team)
 		end
@@ -901,18 +900,16 @@ function join(peer_id, team, force)
 		local vehicle=registerVehicle(vehicle_id)
 		if vehicle and vehicle.alive then
 			player.vehicle_id=vehicle_id
-			--WebMapAddon
+			-- WebMapAddon
 			if g_has_webmap then
 				bindVehicleTeamToWebMap(vehicle_id, team)
 			end
 		end
 	else
-		--WebMapAddon
-		--not sit
-		--Currently, it does not work because player.vehicle_id = -1 is set.
-		local vehicle=registerVehicle(player.vehicle_id)
+		-- WebMapAddon
+		-- Currently, it does not work because player.vehicle_id = -1 is set.
+		local vehicle=findVehicle(player.vehicle_id)
 		if vehicle and vehicle.alive then
-			player.vehicle_id=vehicle_id
 			if g_has_webmap then
 				bindVehicleTeamToWebMap(vehicle_id, team)
 			end
@@ -966,7 +963,7 @@ function shuffle(team_count, exec_peer_id)
 		local team=g_default_teams[1+(i-1)%team_count]
 		g_players[peer_id].team=team
 		announce('You joined to '..team..'.', peer_id)
-		--WebMapAddon
+		-- WebMapAddon
 		if g_has_webmap then
 			local vehicle=findVehicle(g_players[peer_id].vehicle_id)
 			if vehicle and vehicle.alive then
@@ -1132,9 +1129,9 @@ function unregisterVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
 
-	--WebMapAddon
+	-- WebMapAddon
 	if g_has_webmap then
-		g_webMapBindings[vehicle_id]=nil
+		g_webmap_bindings[vehicle_id]=nil
 	end
 
 	for peer_id,player in pairs(g_players) do
@@ -1236,9 +1233,8 @@ function updateVehicle(vehicle)
 	g_player_status_dirty=true
 end
 
---WebMapAddon(Called from the Join/Shuffle/Sit event.)
+-- WebMapAddon(Called from the Join/Shuffle/Sit event.)
 function bindVehicleTeamToWebMap(vehicle_id, team)
-
 	if g_has_webmap==false then
 		return
 	end
@@ -1258,12 +1254,13 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 	local color = TEAM_COLOR_MAP[team]
 	if not color then return end
 
-	if g_webMapBindings[vehicle_id]==color then return end
-	g_webMapBindings[vehicle_id]=color
-	--?wm ct(WebMap_ChangeTeam)command
+	if g_webmap_bindings[vehicle_id]==color then return end
+	g_webmap_bindings[vehicle_id]=color
+	-- ?wm ct(WebMap_ChangeTeam)command
 	local cmd = '?wm ct ' .. vehicle_id .. ' ' .. color
 	server.command(cmd)
 end
+
 -- System Functions --
 
 function updateTeamStatus()
