@@ -1197,7 +1197,7 @@ function updateVehicle(vehicle)
 
 	vehicle.damage_in_frame=0
 
-	if g_savedata.sunk_depth>0 then
+	if g_in_game and g_savedata.sunk_depth>0 then
 		local vehicle_trans=server.getVehiclePos(vehicle_id)
 		local x,y,z=matrix.position(vehicle_trans)
 		if y<-g_savedata.sunk_depth then
