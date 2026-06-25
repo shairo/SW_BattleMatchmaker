@@ -226,7 +226,7 @@ for i=1,10 do g_mag_names[i]='magazine_'..tostring(i) end
 
 g_commands={
 	{
-		name='join',
+		names={'join', 'j'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, team_name, target_peer_id)
 			if g_in_game and not is_admin then
@@ -239,13 +239,13 @@ g_commands={
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
 			join(target_peer_id or peer_id, team_name, is_admin)
 		end,
-		args={
+		argss={
 			{name='team_name', type='string', require=false},
 			{name='peer_id', type='integer', require=false},
 		},
 	},
 	{
-		name='leave',
+		names={'leave', 'l'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if not checkTargetPeerId(target_peer_id, peer_id, is_admin) then return end
@@ -256,7 +256,7 @@ g_commands={
 		},
 	},
 	{
-		name='die',
+		names={'die'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if not g_in_game then
@@ -271,7 +271,7 @@ g_commands={
 		},
 	},
 	{
-		name='ready',
+		names={'ready', 'r'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if g_in_game then
@@ -286,7 +286,7 @@ g_commands={
 		},
 	},
 	{
-		name='wait',
+		names={'wait', 'r'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth, target_peer_id)
 			if g_in_game then
@@ -301,7 +301,7 @@ g_commands={
 		},
 	},
 	{
-		name='order',
+		names={'order', 'o'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			if g_in_game and not g_pause and not g_savedata.order_enabled then
@@ -328,14 +328,14 @@ g_commands={
 		end,
 	},
 	{
-		name='start',
+		names={'start'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			readyAll(peer_id)
 		end,
 	},
 	{
-		name='abort',
+		names={'abort'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			if g_in_countdown then
@@ -347,7 +347,7 @@ g_commands={
 		end,
 	},
 	{
-		name='supply',
+		names={'supply'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			if g_in_game and not is_admin then
@@ -359,14 +359,14 @@ g_commands={
 		end,
 	},
 	{
-		name='delete_supply',
+		names={'delete_supply'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			despawnSupply(peer_id)
 		end,
 	},
 	{
-		name='clear_supply',
+		names={'clear_supply'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			clearSupplies()
@@ -375,7 +375,7 @@ g_commands={
 		end,
 	},
 	{
-		name='flag',
+		names={'flag'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
 			spawnFlag(peer_id, name:lower())
@@ -385,7 +385,7 @@ g_commands={
 		},
 	},
 	{
-		name='delete_flag',
+		names={'delete_flag'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
 			despawnFlag(peer_id, name:lower())
@@ -395,7 +395,7 @@ g_commands={
 		},
 	},
 	{
-		name='clear_flag',
+		names={'clear_flags', 'clear_flag'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			clearFlags()
@@ -403,7 +403,7 @@ g_commands={
 		end,
 	},
 	{
-		name='pause',
+		names={'pause'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			if not g_in_game then
@@ -416,7 +416,7 @@ g_commands={
 		end,
 	},
 	{
-		name='resume',
+		names={'resume'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			if not g_pause then
@@ -428,7 +428,7 @@ g_commands={
 		end,
 	},
 	{
-		name='add_time',
+		names={'add_time'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, minute)
 			if not g_in_game then
@@ -446,7 +446,7 @@ g_commands={
 		},
 	},
 	{
-		name='shuffle',
+		names={'shuffle'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, team_count)
 			if g_in_game or g_in_countdown then
@@ -460,7 +460,7 @@ g_commands={
 		},
 	},
 	{
-		name='reset',
+		names={'reset'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth)
 			for i,player in pairs(g_players) do
@@ -477,7 +477,7 @@ g_commands={
 		end,
 	},
 	{
-		name='reset_ui',
+		names={'reset_ui'},
 		auth=true,
 		action=function(peer_id, is_admin, is_auth)
 			renewUiIds()
@@ -485,7 +485,7 @@ g_commands={
 		end,
 	},
 	{
-		name='set',
+		names={'set'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, key, value)
 			if not key then
@@ -512,7 +512,7 @@ g_commands={
 		},
 	},
 	{
-		name='dismiss',
+		names={'dismiss'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, team_name)
 			dismiss(team_name, peer_id)
@@ -525,8 +525,10 @@ g_commands={
 
 function findCommand(command)
 	for i,command_define in ipairs(g_commands) do
-		if command_define.name==command then
-			return command_define
+		for j,name in ipairs(command_define.names) do
+			if name==command then
+				return command_define
+			end
 		end
 	end
 end
@@ -555,7 +557,7 @@ function showHelp(peer_id, is_admin, is_auth)
 					end
 				end
 			end
-			commands_help=commands_help..'  - ?mm '..command_define.name..args..'\n'
+			commands_help=commands_help..'  - ?mm '..command_define.names[1]..args..'\n'
 			any_commands=true
 		end
 	end
