@@ -882,7 +882,7 @@ function join(peer_id, team, force)
 	local team=trim(team)
 	local player={
 		name=name,
-		trimmed_name=trimWidth(name),
+		trimmed_name=trimWidth(tostring(peer_id//1|0)..". "..name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
