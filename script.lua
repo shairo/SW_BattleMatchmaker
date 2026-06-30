@@ -498,6 +498,14 @@ g_commands={
 		},
 	},
 	{
+		names={'recruit'},
+		admin=true,
+		action=function(peer_id, is_admin, is_auth)
+			recruit()
+		end,
+		args={},
+	},
+	{
 		names={'dismiss'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, team_name)
@@ -965,6 +973,12 @@ function shuffle(team_count, exec_peer_id)
 	stopCountdown()
 	g_team_status_dirty=true
 	g_player_status_dirty=true
+end
+
+function recruit()
+	for i,player in pairs(server.getPlayers()) do
+		join(player.id, g_temporary_team)
+	end
 end
 
 function dismiss(team, peer_id)

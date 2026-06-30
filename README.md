@@ -91,6 +91,8 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   制限時間を追加
 - `?mm shuffle [チーム数(2-4)]`<br>
   ランダムにチーム分け
+- `?mm recruit`<br>
+  サーバー参加者を全員Standbyチームに入れる
 - `?mm dismiss [チーム名]`<br>
   チームを解散
 - `?mm reset`<br>
@@ -101,7 +103,7 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   旗を設置
 - `?mm delete_flag [名前]`<br>
   旗を削除
-- `?mm clear_flag`<br>
+- `?mm clear_flags`<br>
   すべての旗を削除
 - `?mm set [設定名] [設定値]`<br>
   ゲーム設定を変更する<br>
