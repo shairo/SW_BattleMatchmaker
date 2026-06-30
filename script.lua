@@ -378,7 +378,7 @@ g_commands={
 		names={'flag'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
-			spawnFlag(peer_id, name:lower())
+			spawnFlag(peer_id, trimLower(name))
 		end,
 		args={
 			{name='name', type='string', require=true},
@@ -388,7 +388,7 @@ g_commands={
 		names={'delete_flag'},
 		admin=true,
 		action=function(peer_id, is_admin, is_auth, name)
-			despawnFlag(peer_id, name:lower())
+			despawnFlag(peer_id, trimLower(name))
 		end,
 		args={
 			{name='name', type='string', require=true},
@@ -885,9 +885,10 @@ function join(peer_id, team, force)
 	if g_in_game and not force then return end
 	local name, is_success=server.getPlayerName(peer_id)
 	if not is_success then return end
+	local team=trim(team)
 	local player={
 		name=name,
-		trimmed_name=trim(name),
+		trimmed_name=trimWidth(name),
 		team=team,
 		alive=true,
 		ready=g_in_game,
@@ -1103,7 +1104,7 @@ function registerVehicle(vehicle_id)
 		gc_time=600,
 		damage_in_frame=0,
 		name=name,
-		trimmed_name=trim(name),
+		trimmed_name=trimWidth(name),
 	}
 
 	local vehicle_hp
@@ -1252,7 +1253,7 @@ function bindVehicleTeamToWebMap(vehicle_id, team)
 		ylw = "YELLOW",
 		standby = "YELLOW"
 	}
-	team = string.lower(team)
+	team = trimLower(team)
 	local color = TEAM_COLOR_MAP[team]
 	if not color then return end
 
@@ -1312,7 +1313,7 @@ function registerTeamStatus(name)
 	end
 	local popup_name='team_status_'..name
 	registerPopup(popup_name, 0, 0)
-	setPopup(popup_name, true, trim(name))
+	setPopup(popup_name, true, trimWidth(name))
 	local team_status={
 		name=name,
 		popup_name=popup_name,
@@ -1839,6 +1840,13 @@ end
 ----
 
 function trim(str)
+	return str and str:gsub("[^ -~]", ""):gsub("^%s*(.-)%s*$", "%1") or ""
+end
+function trimLower(str)
+	return trim(str):lower()
+end
+function trimWidth(str)
+	str=trim(str)
 	local w=0
 	for i=1,#str do
 		w=w+getWidth(str:byte(i))
