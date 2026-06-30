@@ -53,14 +53,6 @@ g_ammo_supply_buttons={
 	AS_AP={70,1,'as'},
 }
 
-g_classes={
-	ground_light	={hp=300},
-	ground_medium	={hp=1200},
-	ground_heavy	={hp=2400},
-	ground_mega		={hp=3000},
-	ground_boss		={hp=20000},
-}
-
 g_item_supply_buttons={
 	['Take Extinguisher']	={1,10,0,  9},
 	['Take Torch']			={1,27,0,400},
@@ -78,11 +70,6 @@ g_settings={
 		key='vehicle_hp',
 		type='integer',
 		min=1,
-	},
-	{
-		name='Vehicle class Enabled',
-		key='vehicle_class',
-		type='boolean',
 	},
 	{
 		name='Max Vehicle Damage',
@@ -196,7 +183,6 @@ g_temporary_team='Standby'
 
 g_default_savedata={
 	vehicle_hp			=property.slider("Vehicle HP", 100, 5000, 100, 2000),
-	vehicle_class		=property.checkbox("Vehicle class Enabled", true),
 	max_damage			=1000,
 	ammo_supply			=property.checkbox("Ammo supply Enabled", true),
 	ammo_mg				=-1,
@@ -1092,6 +1078,7 @@ function registerVehicle(vehicle_id)
 	vehicle={
 		vehicle_id=vehicle_id,
 		group_id=data.group_id,
+		hp=math.max(g_savedata.vehicle_hp//1|0,1),
 		alive=true,
 		ammo={
 			mg=g_savedata.ammo_mg//1|0,
@@ -1107,24 +1094,8 @@ function registerVehicle(vehicle_id)
 		trimmed_name=trimWidth(name),
 	}
 
-	local vehicle_hp
-	if g_savedata.vehicle_class then
-		for class_name,class in pairs(g_classes) do
-			local sign_data, is_success = server.getVehicleSign(vehicle_id, class_name)
-			if is_success then
-				vehicle_hp=class.hp
-				break
-			end
-		end
-	else
-		vehicle_hp=g_savedata.vehicle_hp
-	end
-
-	if vehicle_hp then
-		vehicle.hp=math.max(vehicle_hp//1|0,1)
-		table.insert(g_vehicles, vehicle)
-		return vehicle
-	end
+	table.insert(g_vehicles, vehicle)
+	return vehicle
 end
 
 function unregisterVehicle(vehicle_id)
