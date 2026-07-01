@@ -180,3 +180,5 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   水没判定とする深度
 - `?mm set damage_popup [true|false]`<br>
   受けたダメージをPopupで表示
+- `?mm set min_damage_popup [最低ダメージ]`<br>
+  ダメージをPopup表示する最低値
