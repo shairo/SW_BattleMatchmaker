@@ -170,6 +170,11 @@ g_settings={
 		type='integer',
 		min=0,
 	},
+	{
+		name='Damage Popup',
+		key='damage_popup',
+		type='boolean',
+	},
 }
 
 g_default_teams={
@@ -203,6 +208,7 @@ g_default_savedata={
 	flag_vehicles		={},
 	auto_auth			=property.checkbox("Auto Auth", false),
 	sunk_depth			=property.slider("Sunk Depth", 0, 200, 5, 0),
+	damage_popup		=property.checkbox("Damage Popup", false),
 }
 
 g_mag_names={}
@@ -831,16 +837,14 @@ end
 
 function onVehicleDamaged(vehicle_id, damage_amount, voxel_x, voxel_y, voxel_z, body_index)
 	vehicle_id=vehicle_id//1|0
-	if not g_in_game then return end
+	damage_amount=damage_amount//1|0
 	if damage_amount<=0 then return end
 
 	local vehicle=findVehicle(vehicle_id)
 	if not vehicle then return end
 
-	if vehicle.hp then
-		vehicle.damage_in_frame=vehicle.damage_in_frame+damage_amount
-		g_player_status_dirty=true
-	end
+	vehicle.damage_in_frame=vehicle.damage_in_frame+damage_amount
+	g_player_status_dirty=true
 end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, command, sub_command, ...)
@@ -1104,6 +1108,10 @@ function registerVehicle(vehicle_id)
 		},
 		gc_time=600,
 		damage_in_frame=0,
+		damage_popup_id=server.getMapID(),
+		damage_popup_time=0,
+		damage_popup_value=0,
+		damage_popup_trans={},
 		name=name,
 		trimmed_name=trimWidth(name),
 	}
@@ -1116,6 +1124,7 @@ function unregisterVehicle(vehicle_id)
 	local vehicle,index=findVehicle(vehicle_id)
 	if not vehicle then return end
 	table.remove(g_vehicles,index)
+	server.removePopup(-1, vehicle.damage_popup_id)
 
 	-- WebMapAddon
 	if g_has_webmap then
@@ -1163,23 +1172,48 @@ function updateVehicle(vehicle)
 
 	local vehicle_id=vehicle.vehicle_id
 
-	if vehicle.hp and vehicle.damage_in_frame>0 then
-		local damage_in_frame=math.min(vehicle.damage_in_frame, g_savedata.max_damage)//1|0
-		vehicle.hp=math.max(vehicle.hp-damage_in_frame, 0)
-
-		if vehicle.hp==0 then
-			vehicle.alive=false
-		end
-	end
-
 	if vehicle.damage_in_frame>0 then
-		for peer_id,player in pairs(g_players) do
-			if player.vehicle_id==vehicle_id then
-				local popup=findPopup(player.popup_name)
-				if popup then
-					popup.shake=17
+		local damage_in_frame=math.min(vehicle.damage_in_frame, g_savedata.max_damage)//1|0
+
+		if g_in_game and vehicle.hp then
+			vehicle.hp=math.max(vehicle.hp-damage_in_frame, 0)//1|0
+
+			if vehicle.hp==0 then
+				vehicle.alive=false
+			end
+
+			for peer_id,player in pairs(g_players) do
+				if player.vehicle_id==vehicle_id then
+					local popup=findPopup(player.popup_name)
+					if popup then
+						popup.shake=17
+					end
 				end
 			end
+		end
+
+		if g_savedata.damage_popup then
+			if vehicle.damage_popup_time<=0 then
+				vehicle.damage_popup_value=damage_in_frame
+			else
+				vehicle.damage_popup_value=vehicle.damage_popup_value+damage_in_frame
+			end
+
+			if vehicle.damage_popup_time<40 then
+				vehicle.damage_popup_trans=server.getVehiclePos(vehicle_id)
+			end
+			local text=tostring(vehicle.damage_popup_value)
+			server.setPopup(-1, vehicle.damage_popup_id, text, true, text,
+				vehicle.damage_popup_trans[13],
+				vehicle.damage_popup_trans[14]+10,
+				vehicle.damage_popup_trans[15],
+				0)
+			vehicle.damage_popup_time=60
+		end
+	elseif vehicle.damage_popup_time>0 then
+		vehicle.damage_popup_time=vehicle.damage_popup_time-1
+		if vehicle.damage_popup_time<=0 then
+			server.removePopup(-1, vehicle.damage_popup_id)
 		end
 	end
 

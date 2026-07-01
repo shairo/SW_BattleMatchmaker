@@ -178,3 +178,5 @@ admin権限のあるユーザーはより細かいコマンドオプションが
   プレイヤー参加時に自動でadd authする
 - `?mm set sunk_depth [水深(m)]`<br>
   水没判定とする深度
+- `?mm set damage_popup [true|false]`<br>
+  受けたダメージをPopupで表示
